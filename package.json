@@ -11,7 +11,9 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "vercel-build": "next build",
-    "llm-server": "npx ts-node src/llm/server.ts"
+    "llm-server": "npx ts-node src/llm/server.ts",
+    "prebuild": "pnpm approve-builds || true",
+    "postinstall": "pnpm approve-builds || true"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
