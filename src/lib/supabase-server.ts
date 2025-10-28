@@ -1,8 +1,23 @@
-import { cookies } from 'next/headers'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import type { Database } from './database.types'
 
+// Simple Supabase client for server-side operations without Next.js dependencies
+export function createSimpleSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
+
+  return createClient<Database>(supabaseUrl, supabaseKey)
+}
+
+// Server-side client for Next.js API routes (with cookies)
 export async function createServerSupabaseClient() {
+  const { cookies } = await import('next/headers')
+  const { createServerClient } = await import('@supabase/ssr')
+  
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
@@ -13,7 +28,7 @@ export async function createServerSupabaseClient() {
         get(name: string) {
           return cookieStore.get(name)?.value
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set(name: string, value: string, options: any) {
           try {
             cookieStore.set({ name, value, ...options })
           } catch (error) {
@@ -22,7 +37,7 @@ export async function createServerSupabaseClient() {
             // user sessions.
           }
         },
-        remove(name: string, options: CookieOptions) {
+        remove(name: string, options: any) {
           try {
             cookieStore.set({ name, value: '', ...options })
           } catch (error) {

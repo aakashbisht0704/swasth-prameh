@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "vercel-build": "next build",
+    "llm-server": "npx ts-node src/llm/server.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

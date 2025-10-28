@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "src/llm/server.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["src/lib/**"]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/llm/(.*)",
+      "dest": "/src/llm/server.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
+  "functions": {
+    "src/llm/server.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "GROQ_API_KEY": "@groq_api_key",
+    "GROQ_MODEL": "@groq_model",
+    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key"
+  }
+}
