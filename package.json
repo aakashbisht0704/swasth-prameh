@@ -4,16 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "vercel-build": "next build",
-    "llm-server": "npx ts-node src/llm/server.ts",
-    "prebuild": "yes | pnpm approve-builds || true",
-    "postinstall": "yes | pnpm approve-builds || true"
+    "llm-server": "npx ts-node src/llm/server.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

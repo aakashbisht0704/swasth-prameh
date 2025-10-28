@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "installCommand": "pnpm install --frozen-lockfile=false && yes | pnpm approve-builds",
-  "buildCommand": "pnpm run build",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
   "routes": [
     {
       "src": "/(.*)",
