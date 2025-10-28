@@ -1,15 +1,6 @@
 {
   "version": 2,
-  "functions": {
-    "src/llm/server.ts": {
-      "maxDuration": 30
-    }
-  },
   "routes": [
-    {
-      "src": "/api/llm/(.*)",
-      "dest": "/src/llm/server.ts"
-    },
     {
       "src": "/(.*)",
       "dest": "/"
