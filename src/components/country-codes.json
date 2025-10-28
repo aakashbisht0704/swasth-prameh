@@ -1,0 +1,22 @@
+[
+  { "code": "+1", "name": "United States" },
+  { "code": "+91", "name": "India" },
+  { "code": "+44", "name": "United Kingdom" },
+  { "code": "+61", "name": "Australia" },
+  { "code": "+81", "name": "Japan" },
+  { "code": "+49", "name": "Germany" },
+  { "code": "+33", "name": "France" },
+  { "code": "+86", "name": "China" },
+  { "code": "+971", "name": "United Arab Emirates" },
+  { "code": "+7", "name": "Russia" },
+  { "code": "+55", "name": "Brazil" },
+  { "code": "+27", "name": "South Africa" },
+  { "code": "+34", "name": "Spain" },
+  { "code": "+39", "name": "Italy" },
+  { "code": "+82", "name": "South Korea" },
+  { "code": "+62", "name": "Indonesia" },
+  { "code": "+234", "name": "Nigeria" },
+  { "code": "+92", "name": "Pakistan" },
+  { "code": "+880", "name": "Bangladesh" },
+  { "code": "+20", "name": "Egypt" }
+]

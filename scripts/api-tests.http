@@ -1,0 +1,37 @@
+# ML Predict
+POST http://localhost:8001/predict
+Content-Type: application/json
+
+{
+  "user_id": "00000000-0000-0000-0000-000000000000",
+  "features": {
+    "Constitution": "Pitta",
+    "Nadi": "pitta",
+    "Lifestyle": "sedentary",
+    "Diet": "high-sugar",
+    "Symptoms": "fatigue, thirst",
+    "Allergies": "none",
+    "Age_Group": "31-45",
+    "Gender": "Male"
+  }
+}
+
+###
+
+# LLM Generate Plan
+POST http://localhost:8002/generate-plan
+Content-Type: application/json
+
+{
+  "user_id": "00000000-0000-0000-0000-000000000000",
+  "diagnosis_id": null,
+  "context": {
+    "prakriti": "Pitta",
+    "pariksha": {"nadi": "pitta"},
+    "diet": "balanced",
+    "lifestyle": "sedentary",
+    "ml_output": {"dosha": "pitta"}
+  }
+}
+
+
