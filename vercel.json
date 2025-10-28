@@ -1,18 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "src/llm/server.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["src/lib/**"]
-      }
+  "functions": {
+    "src/llm/server.ts": {
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
       "src": "/api/llm/(.*)",
@@ -23,11 +15,6 @@
       "dest": "/"
     }
   ],
-  "functions": {
-    "src/llm/server.ts": {
-      "maxDuration": 30
-    }
-  },
   "env": {
     "GROQ_API_KEY": "@groq_api_key",
     "GROQ_MODEL": "@groq_model",
