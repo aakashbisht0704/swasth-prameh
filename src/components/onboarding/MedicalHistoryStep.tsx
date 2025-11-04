@@ -4,21 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "../ui/textarea";
 
 export function MedicalHistoryStep({ onNext, onBack, initialData }: any) {
   const [history, setHistory] = useState(initialData?.medical_history || {
-    familyHistory: { diabetes: false, other: "" },
-    pastHistory: "",
-    surgicalHistory: "",
+    family_history_diabetes: "",
+    hypertension: "",
+    thyroid: "",
     allergies: "",
-    occupationalHistory: "",
-    chiefComplaint: "",
-    menstrualHistory: "",
-    gestationalDiabetes: false
+    surgical_history: "",
+    gestational_diabetes: "",
+    others: ""
   });
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string) => {
     setHistory((prev: any) => ({
       ...prev,
       [field]: value
@@ -38,116 +37,124 @@ export function MedicalHistoryStep({ onNext, onBack, initialData }: any) {
           <p className="text-sm text-muted-foreground">Please provide your medical information</p>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Family History */}
+          {/* Family History of Diabetes */}
           <div className="space-y-3">
             <Label>Family History of Diabetes</Label>
             <RadioGroup
-              value={history.familyHistory?.diabetes ? "yes" : history.familyHistory?.diabetes === false ? "no" : ""}
-              onValueChange={(value) => handleChange("familyHistory", { ...history.familyHistory, diabetes: value === "yes" })}
+              value={history.family_history_diabetes}
+              onValueChange={(value) => handleChange("family_history_diabetes", value)}
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yes" id="diabetes_yes" />
+                <RadioGroupItem value="Yes" id="diabetes_yes" />
                 <Label htmlFor="diabetes_yes">Yes</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id="diabetes_no" />
+                <RadioGroupItem value="No" id="diabetes_no" />
                 <Label htmlFor="diabetes_no">No</Label>
               </div>
             </RadioGroup>
-            <Input
-              placeholder="Other family medical history (optional)"
-              value={history.familyHistory?.other || ""}
-              onChange={(e) => handleChange("familyHistory", { ...history.familyHistory, other: e.target.value })}
-            />
           </div>
 
-          {/* Past Medical History */}
-          <div className="space-y-2">
-            <Label htmlFor="pastHistory">Past Medical History</Label>
-            <textarea
-              id="pastHistory"
-              className="w-full min-h-[80px] p-2 rounded-md border border-input bg-background"
-              placeholder="e.g., Hypertension, Thyroid, etc."
-              value={history.pastHistory || ""}
-              onChange={(e) => handleChange("pastHistory", e.target.value)}
-            />
+          {/* Hypertension */}
+          <div className="space-y-3">
+            <Label>History of Hypertension (High Blood Pressure)</Label>
+            <RadioGroup
+              value={history.hypertension}
+              onValueChange={(value) => handleChange("hypertension", value)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes" id="hypertension_yes" />
+                <Label htmlFor="hypertension_yes">Yes</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="No" id="hypertension_no" />
+                <Label htmlFor="hypertension_no">No</Label>
+              </div>
+            </RadioGroup>
           </div>
 
-          {/* Surgical History */}
-          <div className="space-y-2">
-            <Label htmlFor="surgicalHistory">Surgical History</Label>
-            <textarea
-              id="surgicalHistory"
-              className="w-full min-h-[80px] p-2 rounded-md border border-input bg-background"
-              placeholder="Any surgeries or procedures"
-              value={history.surgicalHistory || ""}
-              onChange={(e) => handleChange("surgicalHistory", e.target.value)}
-            />
+          {/* Thyroid */}
+          <div className="space-y-3">
+            <Label>History of Thyroid Disorders</Label>
+            <RadioGroup
+              value={history.thyroid}
+              onValueChange={(value) => handleChange("thyroid", value)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes" id="thyroid_yes" />
+                <Label htmlFor="thyroid_yes">Yes</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="No" id="thyroid_no" />
+                <Label htmlFor="thyroid_no">No</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           {/* Allergies */}
-          <div className="space-y-2">
-            <Label htmlFor="allergies">Allergies (if any)</Label>
-            <Input
-              id="allergies"
-              placeholder="List any allergies"
-              value={history.allergies || ""}
-              onChange={(e) => handleChange("allergies", e.target.value)}
-            />
+          <div className="space-y-3">
+            <Label>Any Known Allergies</Label>
+            <RadioGroup
+              value={history.allergies}
+              onValueChange={(value) => handleChange("allergies", value)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes" id="allergies_yes" />
+                <Label htmlFor="allergies_yes">Yes</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="No" id="allergies_no" />
+                <Label htmlFor="allergies_no">No</Label>
+              </div>
+            </RadioGroup>
           </div>
 
-          {/* Occupational History */}
-          <div className="space-y-2">
-            <Label htmlFor="occupationalHistory">Occupational History</Label>
-            <Input
-              id="occupationalHistory"
-              placeholder="Your occupation"
-              value={history.occupationalHistory || ""}
-              onChange={(e) => handleChange("occupationalHistory", e.target.value)}
-            />
-          </div>
-
-          {/* Chief Complaint */}
-          <div className="space-y-2">
-            <Label htmlFor="chiefComplaint">Chief Complaint</Label>
-            <textarea
-              id="chiefComplaint"
-              className="w-full min-h-[80px] p-2 rounded-md border border-input bg-background"
-              placeholder="Main reason for seeking Ayurvedic care"
-              value={history.chiefComplaint || ""}
-              onChange={(e) => handleChange("chiefComplaint", e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Menstrual History */}
-          <div className="space-y-2">
-            <Label htmlFor="menstrualHistory">Menstrual History (if applicable)</Label>
-            <textarea
-              id="menstrualHistory"
-              className="w-full min-h-[80px] p-2 rounded-md border border-input bg-background"
-              placeholder="Cycle regularity, any disorders, etc."
-              value={history.menstrualHistory || ""}
-              onChange={(e) => handleChange("menstrualHistory", e.target.value)}
-            />
+          {/* Surgical History */}
+          <div className="space-y-3">
+            <Label>Any Surgical History</Label>
+            <RadioGroup
+              value={history.surgical_history}
+              onValueChange={(value) => handleChange("surgical_history", value)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Yes" id="surgical_yes" />
+                <Label htmlFor="surgical_yes">Yes</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="No" id="surgical_no" />
+                <Label htmlFor="surgical_no">No</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           {/* Gestational Diabetes */}
           <div className="space-y-3">
-            <Label>History of Gestational Diabetes</Label>
+            <Label>History of Gestational Diabetes (if applicable)</Label>
             <RadioGroup
-              value={history.gestationalDiabetes ? "yes" : history.gestationalDiabetes === false ? "no" : ""}
-              onValueChange={(value) => handleChange("gestationalDiabetes", value === "yes")}
+              value={history.gestational_diabetes}
+              onValueChange={(value) => handleChange("gestational_diabetes", value)}
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yes" id="gd_yes" />
+                <RadioGroupItem value="Yes" id="gd_yes" />
                 <Label htmlFor="gd_yes">Yes</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="no" id="gd_no" />
+                <RadioGroupItem value="No" id="gd_no" />
                 <Label htmlFor="gd_no">No</Label>
               </div>
             </RadioGroup>
+          </div>
+
+          {/* Others */}
+          <div className="space-y-3">
+            <Label htmlFor="others">Others (if any)</Label>
+            <Textarea
+              id="others"
+              placeholder="Any additional medical information or comments..."
+              value={history.others || ""}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("others", e.target.value)}
+              className="min-h-[80px]"
+            />
           </div>
         </CardContent>
       </Card>

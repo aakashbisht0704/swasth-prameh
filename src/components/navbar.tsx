@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from './ui/button'
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
 
 interface NavItemProps {
   href: string
@@ -70,7 +71,8 @@ export function Navbar() {
     <header className="flex justify-center mx-auto sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="font-bold text-lg md:text-xl">SwasthPrameh</span>
+          {/* <span className="font-bold text-lg md:text-xl">SwasthPramehsss</span> */}
+          <img src="logo.png" alt="SwasthPrameh" className="w-20" />
         </Link>
         
         <nav className="flex items-center space-x-2 md:space-x-4">

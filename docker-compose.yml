@@ -1,87 +1,70 @@
 version: '3.8'
 
 services:
-  # Next.js Frontend
-  nextjs:
+  web:
+    image: ghcr.io/aakashbisht0704/swasth-prameh/web:latest
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/web/Dockerfile
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - SUPABASE_PROJECT_URL=${SUPABASE_PROJECT_URL}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - GROQ_MODEL=${GROQ_MODEL:-mixtral-8x7b-32768}
-      - ML_SERVER_URL=http://ml-server:8001
-      - LLM_SERVER_URL=http://llm-server:8002
-      - NEXT_PUBLIC_ML_SERVER_URL=${NEXT_PUBLIC_ML_SERVER_URL:-http://localhost:8001}
-      - NEXT_PUBLIC_LLM_SERVER_URL=${NEXT_PUBLIC_LLM_SERVER_URL:-http://localhost:8002}
-    depends_on:
-      - ml-server
-      - llm-server
+      - PORT=3000
+    env_file:
+      - .env
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
-      - swasth-network
+      - app-network
 
-  # ML Service (FastAPI)
-  ml-server:
+  ml:
+    image: ghcr.io/aakashbisht0704/swasth-prameh/ml:latest
     build:
       context: .
-      dockerfile: src/ml/Dockerfile
-    ports:
-      - "8001:8001"
-    environment:
-      - SUPABASE_PROJECT_URL=${SUPABASE_PROJECT_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - DOSHA_MODEL_PATH=/app/src/ml/dosha_model.pkl
-    volumes:
-      - ./src/ml/data:/app/src/ml/data
-      - ./src/ml/dosha_model.pkl:/app/src/ml/dosha_model.pkl
-    restart: unless-stopped
-    networks:
-      - swasth-network
-
-  # LLM Service (Node.js)
-  llm-server:
-    build:
-      context: .
-      dockerfile: src/llm/Dockerfile
+      dockerfile: docker/ml/Dockerfile
     ports:
       - "8002:8002"
     environment:
-      - SUPABASE_PROJECT_URL=${SUPABASE_PROJECT_URL}
-      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - GROQ_MODEL=${GROQ_MODEL:-mixtral-8x7b-32768}
+      - NODE_ENV=production
       - PORT=8002
+    env_file:
+      - .env
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
-      - swasth-network
+      - app-network
 
-  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
-      - nextjs
-      - ml-server
-      - llm-server
+      - web
+      - ml
     restart: unless-stopped
     networks:
-      - swasth-network
+      - app-network
 
 networks:
-  swasth-network:
+  app-network:
     driver: bridge
 
 volumes:
-  ml_data:
-  ssl_certs:
+  nginx_ssl:
+    driver: local

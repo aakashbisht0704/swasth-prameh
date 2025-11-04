@@ -6,15 +6,38 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
+This will start both the Next.js web server (port 3000) and the LLM server (port 8002) concurrently.
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Running Servers Separately
+
+If you need to run the servers separately:
+
+```bash
+# Run only Next.js web server
+npm run dev:web
+
+# Run only LLM server
+npm run dev:llm
+```
+
+## Production
+
+For production, use:
+
+```bash
+npm run build
+npm start
+```
+
+This will start both servers in production mode.
+
+## Important Note for Vercel Deployment
+
+Vercel uses serverless functions and doesn't support long-running processes. The LLM server (Express) needs to be converted to Next.js API routes for Vercel deployment, or deployed separately. For traditional VPS/hosting platforms, the current setup works fine.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
