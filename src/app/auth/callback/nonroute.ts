@@ -7,6 +7,22 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/onboarding' // Default to onboarding for new users
+  
+  // Debug logging
+  console.log('=== OAuth Callback Debug ===')
+  console.log('Request URL:', request.url)
+  console.log('Origin:', origin)
+  console.log('Code present:', !!code)
+  console.log('Headers:', {
+    host: request.headers.get('host'),
+    'x-forwarded-host': request.headers.get('x-forwarded-host'),
+    'x-forwarded-proto': request.headers.get('x-forwarded-proto'),
+    referer: request.headers.get('referer'),
+  })
+  console.log('Environment:', {
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NODE_ENV: process.env.NODE_ENV,
+  })
 
   if (code) {
     const cookieStore: { [key: string]: string } = {}

@@ -129,16 +129,32 @@ export function AuthForm() {
         redirectUrl = `${location.origin}/auth/callback`
       }
       
-      console.log('OAuth redirect URL:', redirectUrl) // Debug log
-      console.log('Current origin:', location.origin) // Debug log
-      console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL) // Debug log
+      console.log('=== Google OAuth Initiation ===')
+      console.log('OAuth redirect URL:', redirectUrl)
+      console.log('Current origin:', location.origin)
+      console.log('Current hostname:', location.hostname)
+      console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
+      console.log('Full location:', location.href)
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Try to ensure the redirect URL is absolute and correct
+      const absoluteRedirectUrl = redirectUrl.startsWith('http') 
+        ? redirectUrl 
+        : `${location.protocol}//${location.host}${redirectUrl}`
+      
+      console.log('Absolute redirect URL:', absoluteRedirectUrl)
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: absoluteRedirectUrl,
+          queryParams: {
+            // Force the redirect URL in query params too
+            redirect_to: absoluteRedirectUrl,
+          },
         },
       })
+      
+      console.log('OAuth response:', { data, error })
       if (error) throw error
       // Google OAuth will redirect to callback, which should handle onboarding/dashboard redirect
     } catch (error: any) {
