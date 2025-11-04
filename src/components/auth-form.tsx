@@ -69,10 +69,21 @@ export function AuthForm() {
         }
       } else {
         if (isSignUp) {
-          // Use environment variable in production, fallback to location.origin for development
-          const emailRedirectUrl = process.env.NEXT_PUBLIC_SITE_URL 
-            ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-            : `${location.origin}/auth/callback`
+          // Determine redirect URL - prioritize environment variable, but ensure it's not localhost in production
+          let emailRedirectUrl: string
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+          const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+          
+          if (siteUrl && !siteUrl.includes('localhost') && !isLocalhost) {
+            // Use environment variable if set and not localhost (production)
+            emailRedirectUrl = `${siteUrl}/auth/callback`
+          } else if (isLocalhost) {
+            // Development - use localhost
+            emailRedirectUrl = `${location.origin}/auth/callback`
+          } else {
+            // Production without env var - use current origin (should be your domain)
+            emailRedirectUrl = `${location.origin}/auth/callback`
+          }
           
           const { error } = await supabase.auth.signUp({
             email,
@@ -102,10 +113,23 @@ export function AuthForm() {
 
   const handleGoogleSignIn = async () => {
     try {
-      // Use environment variable in production, fallback to location.origin for development
-      const redirectUrl = process.env.NEXT_PUBLIC_SITE_URL 
-        ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-        : `${location.origin}/auth/callback`
+      // Determine redirect URL - prioritize environment variable, but ensure it's not localhost in production
+      let redirectUrl: string
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+      const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      
+      if (siteUrl && !siteUrl.includes('localhost') && !isLocalhost) {
+        // Use environment variable if set and not localhost (production)
+        redirectUrl = `${siteUrl}/auth/callback`
+      } else if (isLocalhost) {
+        // Development - use localhost
+        redirectUrl = `${location.origin}/auth/callback`
+      } else {
+        // Production without env var - use current origin (should be your domain)
+        redirectUrl = `${location.origin}/auth/callback`
+      }
+      
+      console.log('OAuth redirect URL:', redirectUrl) // Debug log
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

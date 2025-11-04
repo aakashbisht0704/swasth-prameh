@@ -44,24 +44,28 @@ export async function GET(request: Request) {
         const redirectUrl = await getRedirectUrl(user.id)
         
         // Determine the base URL for redirects
-        // Priority: NEXT_PUBLIC_SITE_URL > x-forwarded-host > origin
+        // Priority: NEXT_PUBLIC_SITE_URL (if not localhost) > x-forwarded-host > origin
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
         const forwardedHost = request.headers.get('x-forwarded-host')
-        const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+        const forwardedProto = request.headers.get('x-forwarded-proto') || (origin.startsWith('https') ? 'https' : 'http')
         const isLocalEnv = process.env.NODE_ENV === 'development'
+        const originHost = new URL(origin).hostname
+        const isLocalhostOrigin = originHost === 'localhost' || originHost === '127.0.0.1'
         
         let baseUrl: string
         
-        if (siteUrl) {
-          // Use environment variable if set (best for production)
+        if (siteUrl && !siteUrl.includes('localhost') && !isLocalhostOrigin && !isLocalEnv) {
+          // Use environment variable if set and not localhost (production)
           baseUrl = siteUrl
         } else if (forwardedHost && !isLocalEnv) {
           // Use forwarded host header (Vercel provides this)
           baseUrl = `${forwardedProto}://${forwardedHost}`
         } else {
-          // Fallback to origin (for local development)
+          // Fallback to origin
           baseUrl = origin
         }
+        
+        console.log('Callback redirect baseUrl:', baseUrl, 'redirectUrl:', redirectUrl) // Debug log
         
         return NextResponse.redirect(`${baseUrl}${redirectUrl}`)
       }
@@ -72,11 +76,13 @@ export async function GET(request: Request) {
   // Use the same URL resolution logic as successful redirect
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
   const forwardedHost = request.headers.get('x-forwarded-host')
-  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  const forwardedProto = request.headers.get('x-forwarded-proto') || (origin.startsWith('https') ? 'https' : 'http')
   const isLocalEnv = process.env.NODE_ENV === 'development'
+  const originHost = new URL(origin).hostname
+  const isLocalhostOrigin = originHost === 'localhost' || originHost === '127.0.0.1'
   
   let baseUrl: string
-  if (siteUrl) {
+  if (siteUrl && !siteUrl.includes('localhost') && !isLocalhostOrigin && !isLocalEnv) {
     baseUrl = siteUrl
   } else if (forwardedHost && !isLocalEnv) {
     baseUrl = `${forwardedProto}://${forwardedHost}`
