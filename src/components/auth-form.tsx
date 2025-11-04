@@ -130,6 +130,8 @@ export function AuthForm() {
       }
       
       console.log('OAuth redirect URL:', redirectUrl) // Debug log
+      console.log('Current origin:', location.origin) // Debug log
+      console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL) // Debug log
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
