@@ -69,11 +69,16 @@ export function AuthForm() {
         }
       } else {
         if (isSignUp) {
+          // Use environment variable in production, fallback to location.origin for development
+          const emailRedirectUrl = process.env.NEXT_PUBLIC_SITE_URL 
+            ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+            : `${location.origin}/auth/callback`
+          
           const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
-              emailRedirectTo: `${location.origin}/auth/callback`,
+              emailRedirectTo: emailRedirectUrl,
             },
           })
           if (error) throw error
@@ -97,10 +102,15 @@ export function AuthForm() {
 
   const handleGoogleSignIn = async () => {
     try {
+      // Use environment variable in production, fallback to location.origin for development
+      const redirectUrl = process.env.NEXT_PUBLIC_SITE_URL 
+        ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+        : `${location.origin}/auth/callback`
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
         },
       })
       if (error) throw error

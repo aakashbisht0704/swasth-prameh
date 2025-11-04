@@ -39,6 +39,16 @@ This will start both servers in production mode.
 
 Vercel uses serverless functions and doesn't support long-running processes. The LLM server (Express) needs to be converted to Next.js API routes for Vercel deployment, or deployed separately. For traditional VPS/hosting platforms, the current setup works fine.
 
+## Google OAuth Configuration
+
+For Google OAuth to work in production (especially on Vercel), you need to configure:
+
+1. **Google Cloud Console** - Set up OAuth credentials and authorized redirect URIs
+2. **Supabase** - Configure Google provider with Client ID and Secret
+3. **Vercel Environment Variables** - Set `NEXT_PUBLIC_SITE_URL` to your production URL
+
+See **[GOOGLE_OAUTH_VERCEL_SETUP.md](./GOOGLE_OAUTH_VERCEL_SETUP.md)** for detailed step-by-step instructions.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

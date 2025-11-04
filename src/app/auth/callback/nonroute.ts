@@ -43,20 +43,46 @@ export async function GET(request: Request) {
         // Get appropriate redirect URL
         const redirectUrl = await getRedirectUrl(user.id)
         
+        // Determine the base URL for redirects
+        // Priority: NEXT_PUBLIC_SITE_URL > x-forwarded-host > origin
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
         const forwardedHost = request.headers.get('x-forwarded-host')
+        const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
         const isLocalEnv = process.env.NODE_ENV === 'development'
         
-        if (isLocalEnv) {
-          return NextResponse.redirect(`${origin}${redirectUrl}`)
-        } else if (forwardedHost) {
-          return NextResponse.redirect(`https://${forwardedHost}${redirectUrl}`)
+        let baseUrl: string
+        
+        if (siteUrl) {
+          // Use environment variable if set (best for production)
+          baseUrl = siteUrl
+        } else if (forwardedHost && !isLocalEnv) {
+          // Use forwarded host header (Vercel provides this)
+          baseUrl = `${forwardedProto}://${forwardedHost}`
         } else {
-          return NextResponse.redirect(`${origin}${redirectUrl}`)
+          // Fallback to origin (for local development)
+          baseUrl = origin
         }
+        
+        return NextResponse.redirect(`${baseUrl}${redirectUrl}`)
       }
     }
   }
 
   // Return to auth page with error if something went wrong
-  return NextResponse.redirect(`${origin}/auth?error=authentication_failed`)
+  // Use the same URL resolution logic as successful redirect
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  const isLocalEnv = process.env.NODE_ENV === 'development'
+  
+  let baseUrl: string
+  if (siteUrl) {
+    baseUrl = siteUrl
+  } else if (forwardedHost && !isLocalEnv) {
+    baseUrl = `${forwardedProto}://${forwardedHost}`
+  } else {
+    baseUrl = origin
+  }
+  
+  return NextResponse.redirect(`${baseUrl}/auth?error=authentication_failed`)
 }
