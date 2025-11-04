@@ -27,7 +27,7 @@ RUN adduser --system --uid 1001 llmuser
 # Copy package files and install production dependencies + type definitions and ts-node needed for runtime
 COPY package*.json ./
 RUN npm ci --production --legacy-peer-deps && \
-    npm install --save-dev @types/express @types/cors ts-node --legacy-peer-deps && \
+    npm install --save-dev @types/express @types/cors ts-node typescript --legacy-peer-deps && \
     npm cache clean --force
 
 # Copy LLM service files
@@ -40,4 +40,4 @@ USER llmuser
 
 EXPOSE 8002
 
-CMD ["npx", "ts-node", "src/llm/server.ts"]
+CMD ["node_modules/.bin/ts-node", "src/llm/server.ts"]
