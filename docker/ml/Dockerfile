@@ -40,4 +40,4 @@ USER llmuser
 
 EXPOSE 8002
 
-CMD ["node_modules/.bin/ts-node", "src/llm/server.ts"]
+CMD ["node", "node_modules/ts-node/dist/bin.js", "src/llm/server.ts"]
