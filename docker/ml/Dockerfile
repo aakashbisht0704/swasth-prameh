@@ -24,10 +24,9 @@ ENV PORT=8002
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 llmuser
 
-# Copy package files and install production dependencies + ts-node and types (as regular deps, not dev)
+# Copy package files and install ALL dependencies (including devDependencies for ts-node)
 COPY package*.json ./
-RUN npm ci --production --legacy-peer-deps && \
-    npm install ts-node typescript @types/express @types/cors --save --legacy-peer-deps && \
+RUN npm ci --legacy-peer-deps && \
     npm cache clean --force
 
 # Copy LLM service files
