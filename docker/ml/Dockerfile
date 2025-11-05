@@ -5,12 +5,34 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (including devDependencies for TypeScript compilation)
 RUN npm ci --legacy-peer-deps
 
-# Copy LLM service source
+# Copy LLM service source and lib files
 COPY src/llm ./src/llm
 COPY src/lib ./src/lib
+
+# Compile TypeScript to JavaScript (ES modules)
+# Create a temporary tsconfig for compilation
+RUN echo '{ \
+  "compilerOptions": { \
+    "target": "ES2020", \
+    "module": "ES2020", \
+    "lib": ["ES2020"], \
+    "outDir": "./dist", \
+    "rootDir": "./", \
+    "strict": true, \
+    "esModuleInterop": true, \
+    "skipLibCheck": true, \
+    "forceConsistentCasingInFileNames": true, \
+    "resolveJsonModule": true, \
+    "moduleResolution": "node" \
+  }, \
+  "include": ["src/**/*"], \
+  "exclude": ["node_modules"] \
+}' > tsconfig.ml.json
+
+RUN npx tsc -p tsconfig.ml.json
 
 # Production stage
 FROM node:20-alpine AS runner
@@ -24,14 +46,18 @@ ENV PORT=8002
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 llmuser
 
-# Copy package files and install ALL dependencies (including devDependencies for ts-node)
+# Copy package files and install ONLY production dependencies
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps && \
+RUN npm ci --production --legacy-peer-deps && \
     npm cache clean --force
 
-# Copy LLM service files
-COPY --from=builder /app/src/llm ./src/llm
-COPY --from=builder /app/src/lib ./src/lib
+# Copy compiled JavaScript files from builder
+COPY --from=builder /app/dist/src/llm ./src/llm
+COPY --from=builder /app/dist/src/lib ./src/lib
+
+# Add "type": "module" to package.json for ES module support (using jq or sed)
+# If jq is not available, use node to modify package.json
+RUN node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json')); pkg.type='module'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2))"
 
 # Change ownership to llmuser
 RUN chown -R llmuser:nodejs /app
@@ -39,4 +65,5 @@ USER llmuser
 
 EXPOSE 8002
 
-CMD ["node", "-r", "ts-node/register", "src/llm/server.ts"]
+# Run the compiled JavaScript file (ES module)
+CMD ["node", "src/llm/server.js"]
