@@ -22,6 +22,11 @@ const app = express()
 app.use(cors())
 app.use(express.json({ limit: '1mb' }))
 
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok', service: 'llm-server' })
+})
+
 const GROQ_API_KEY: string | undefined = process.env.GROQ_API_KEY
 const GROQ_MODEL: string = process.env.GROQ_MODEL || 'llama-3.1-8b-instant'
 const SUPABASE_URL: string | undefined = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_PROJECT_URL
