@@ -27,8 +27,7 @@ RUN echo '{ \
     "forceConsistentCasingInFileNames": false, \
     "resolveJsonModule": true, \
     "moduleResolution": "node", \
-    "noEmitOnError": false, \
-    "suppressImplicitAnyIndexErrors": true \
+    "noEmitOnError": false \
   }, \
   "include": ["src/llm/**/*", "src/lib/ai/**/*"], \
   "exclude": ["node_modules"] \
