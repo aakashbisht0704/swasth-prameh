@@ -1,4 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Overview
+
+SwasthPrameh is a Next.js platform combining Ayurvedic expertise, machine learning, and community health worker tooling to deliver adaptive diabetes care plans. The redesigned landing page lives at `src/app/page.tsx` and showcases the product story using Tailwind, shadcn/ui, and Framer Motion micro-interactions.
+
+### Landing Page Quickstart
+
+- Hero copy lives in `src/components/home/HeroText.tsx`. Update the headline, subheading, CTAs, and trust badges here.
+- Carousel content is in `src/components/home/HeroCarousel.tsx`. Replace the placeholder Unsplash URLs with project-approved assets and adjust captions as needed.
+- Section content for About, Features, How It Works, Sample Plan, Testimonials, and FAQ can be customized in their respective files under `src/components/home/`.
+- Images can be swapped by uploading to `/public/images/home/` and pointing the components to the new paths, or by updating the remote URLs.
+- The medical disclaimer near the hero CTAs should remain visible; update the copy instead of removing it if legal language changes.
+
+### Replacing Hero Images
+
+1. Drop new assets into `public/images/home/` (recommended sizes: 1200×1500 for hero slides, 800×800 for illustrations).
+2. Update the `image.src` values in `HeroCarousel.tsx` (local paths can start with `/images/home/...`).
+3. Adjust alt text for accessibility—keep it descriptive and concise.
+4. Regenerate responsive metadata if using external URLs (OG/Twitter images defined in `src/app/layout.tsx`).
+
+### Suggested PR Template
+
+Use `docs/landing-page-pr-template.md` for landing page updates. The template includes screenshot reminders and checklists for accessibility, responsiveness, and asset verification.
+
+### Continuous Deployment
+
+- GitHub Actions workflow `.github/workflows/deploy.yml` redeploys the Hostinger VPS on every push to `main`.
+- Configure repository secrets `VPS_HOST`, `VPS_SSH_PORT`, `VPS_USER`, `VPS_SSH_PRIVATE_KEY`, `VPS_PROJECT_PATH`, and `VPS_REPO_URL`.
+- Server-side script `deploy/deploy.sh` performs `git reset`, Docker rebuilds, restarts, and runs the integrated health check.
 
 ## Getting Started
 

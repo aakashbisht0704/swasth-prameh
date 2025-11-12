@@ -124,13 +124,17 @@ sudo chown $USER:$USER nginx/ssl/*
 
 ### Required Secrets
 
-Add these secrets to your GitHub repository:
+The workflow `.github/workflows/deploy.yml` ships with the repository and redeploys on every push to `main`. Add the following repository secrets before enabling it:
 
-1. **VPS_HOST**: Your VPS IP address
-2. **VPS_USER**: SSH username (usually your HestiaCP username)
-3. **VPS_SSH_PRIVATE_KEY**: Private SSH key for VPS access
-4. **VPS_SSH_PORT**: SSH port (default: 22)
-5. **SLACK_WEBHOOK_URL**: (Optional) Slack notifications
+1. **VPS_HOST** – Your VPS IP address or hostname  
+2. **VPS_SSH_PORT** – SSH port (default `22`)  
+3. **VPS_USER** – SSH username (your Hostinger/Hestia user)  
+4. **VPS_SSH_PRIVATE_KEY** – Private key with access to the VPS (format: PEM)  
+5. **VPS_PROJECT_PATH** – Absolute path to the project on the server (default `/home/<user>/swasthprameh`)  
+6. **VPS_REPO_URL** – Git URL to clone (default `https://github.com/aakashbisht0704/swasth-prameh.git`)
+7. **SLACK_WEBHOOK_URL** *(optional)* – For custom notification steps
+
+The key must be added to `~/.ssh/authorized_keys` on the VPS. You can reuse the same key for manual SSH access.
 
 ### SSH Key Setup
 
@@ -163,7 +167,15 @@ docker-compose logs -f ml
 
 ### Updates
 
-The application automatically updates when you push to the `main` branch. For manual updates:
+Deployments happen automatically when you push to `main`. The GitHub Actions workflow connects to the VPS and runs `deploy/deploy.sh`, which:
+
+1. Fetches the latest commit on `main`
+2. Seeds `.env` from `deploy/env.deploy` if requested
+3. Pulls fresh Docker base layers
+4. Rebuilds images and restarts the stack
+5. Executes `deploy/healthcheck.sh`
+
+For manual updates:
 
 ```bash
 # Pull latest changes
