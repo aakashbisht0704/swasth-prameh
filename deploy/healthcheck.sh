@@ -26,6 +26,16 @@ print_warning() {
 echo "🔍 SwasthPrameh Health Check"
 echo "=============================="
 
+# Resolve docker compose command (supports plugin & legacy binary)
+if command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE="docker-compose"
+elif docker compose version >/dev/null 2>&1; then
+    COMPOSE="docker compose"
+else
+    print_error "Docker Compose is not installed or not in PATH."
+    exit 1
+fi
+
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
     print_error "Docker is not running"
@@ -34,7 +44,7 @@ fi
 
 # Check if containers are running
 print_status "Checking container status..."
-if ! docker-compose ps | grep -q "Up"; then
+if ! $COMPOSE ps | grep -q "Up"; then
     print_error "No containers are running"
     exit 1
 fi
@@ -95,6 +105,6 @@ if [ $WEB_STATUS -eq 0 ] && [ $ML_STATUS -eq 0 ]; then
     exit 0
 else
     print_error "⚠️  Some services are unhealthy"
-    print_status "Run 'docker-compose logs' to check logs"
+    print_status "Run '$COMPOSE logs' to check logs"
     exit 1
 fi
