@@ -15,11 +15,16 @@ cd /root/swasth-prameh || exit 1
 echo "📥 Pulling latest changes from GitHub..."
 git pull origin main
 
-# Rebuild and restart containers
+# Stop containers for clean rebuild
+echo "🛑 Stopping containers..."
+docker compose down
+
+# Rebuild containers
 echo "🔨 Rebuilding containers..."
 docker compose build --no-cache web ml
 
-echo "🔄 Restarting containers..."
+# Start containers
+echo "🚀 Starting containers..."
 docker compose up -d
 
 # Wait for containers to be healthy
