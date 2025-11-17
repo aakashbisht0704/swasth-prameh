@@ -3,13 +3,25 @@
 import { Github, Linkedin, Mail } from 'lucide-react'
 import Link from 'next/link'
 
-const footerLinks = [
-  { label: 'Docs', href: '/docs' },
-  { label: 'Onboarding', href: '/onboarding' },
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Contact', href: '/contact' },
-  { label: 'Privacy Policy', href: '/privacy' },
-]
+const footerLinks = {
+  company: [
+    { label: 'About Us', href: '#about' },
+    { label: 'Our Approach', href: '#approach' },
+    { label: 'Services', href: '#services' },
+    { label: 'Contact Us', href: '#contact' },
+  ],
+  resources: [
+    { label: 'Resources', href: '#resources' },
+    { label: 'Blog', href: '/resources' },
+    { label: 'FAQs', href: '/resources#faq' },
+    { label: 'Patient Portal', href: '/dashboard' },
+  ],
+  legal: [
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Cookie Policy', href: '/cookies' },
+  ],
+}
 
 export function Footer() {
   return (
@@ -18,23 +30,59 @@ export function Footer() {
         <div className="max-w-md space-y-3 text-sm text-muted-foreground">
           <h3 className="text-lg font-semibold text-foreground">SwasthPrameh</h3>
           <p>
-            Student-built platform for preventive diabetes care combining Ayurvedic wisdom and AI.
-            Currently piloting with partner clinics in Kerala & Maharashtra.
+            Personalized Ayurvedic diabetes management platform combining traditional wisdom with modern AI technology.
+            Get your customized 15-day diet and lifestyle plan based on your unique Prakriti.
           </p>
           <p className="text-xs">
             © {new Date().getFullYear()} SwasthPrameh Collective. All rights reserved.
           </p>
         </div>
-        <div className="grid gap-4 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
-          {footerLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="transition hover:text-primary"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="grid gap-8 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <p className="font-semibold text-foreground mb-3">Company</p>
+            <ul className="space-y-2">
+              {footerLinks.company.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="transition hover:text-primary"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground mb-3">Resources</p>
+            <ul className="space-y-2">
+              {footerLinks.resources.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="transition hover:text-primary"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground mb-3">Legal</p>
+            <ul className="space-y-2">
+              {footerLinks.legal.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="transition hover:text-primary"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <div className="space-y-4 text-sm text-muted-foreground">
           <p className="font-semibold text-foreground">Connect with us</p>

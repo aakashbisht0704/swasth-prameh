@@ -16,11 +16,13 @@ export function AuthForm() {
   const [usePhone, setUsePhone] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [countryCode, setCountryCode] = useState('+1')
+  const [passwordError, setPasswordError] = useState('')
   const router = useRouter();
 
   const handlePostAuthRedirect = async () => {
@@ -41,9 +43,32 @@ export function AuthForm() {
     }
   };
 
+  const validatePassword = (): boolean => {
+    if (isSignUp && !usePhone) {
+      if (password.length < 6) {
+        setPasswordError('Password must be at least 6 characters long')
+        return false
+      }
+      if (password !== confirmPassword) {
+        setPasswordError('Passwords do not match')
+        return false
+      }
+      setPasswordError('')
+    }
+    return true
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate password for signup
+    if (isSignUp && !usePhone && !validatePassword()) {
+      return
+    }
+    
     setLoading(true)
+    setPasswordError('')
+    
     try {
       if (usePhone) {
         const fullPhone = `${countryCode}${phone.replace(/^0+/, '')}`
@@ -85,7 +110,7 @@ export function AuthForm() {
             emailRedirectUrl = `${location.origin}/auth/callback`
           }
           
-          const { error } = await supabase.auth.signUp({
+          const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -93,14 +118,38 @@ export function AuthForm() {
             },
           })
           if (error) throw error
-          // Email sign up: user must verify email, so don't redirect yet
+          
+          // Check if email confirmation is required
+          if (data.user && !data.session) {
+            // Email confirmation required
+            toast.success('Please check your email to verify your account before signing in.')
+            // Reset form
+            setEmail('')
+            setPassword('')
+            setConfirmPassword('')
+            setIsSignUp(false) // Switch to sign in mode
+          } else if (data.session) {
+            // Email confirmation not required (or already confirmed)
+            toast.success('Account created successfully!')
+            await handlePostAuthRedirect()
+          }
         } else {
+          // Sign in
           const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
           })
-          if (error) throw error
-          await handlePostAuthRedirect();
+          if (error) {
+            // Handle specific error cases
+            if (error.message.includes('Invalid login credentials')) {
+              throw new Error('Invalid email or password. Please check your credentials and try again.')
+            } else if (error.message.includes('Email not confirmed')) {
+              throw new Error('Please verify your email address before signing in. Check your inbox for the confirmation link.')
+            }
+            throw error
+          }
+          toast.success('Signed in successfully!')
+          await handlePostAuthRedirect()
         }
       }
     } catch (error: any) {
@@ -164,13 +213,13 @@ export function AuthForm() {
   }
 
   return (
-    <Card className="w-[350px]">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>{isSignUp ? 'Create an Account' : 'Welcome Back'}</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-2xl">{isSignUp ? 'Create an Account' : 'Welcome Back'}</CardTitle>
+        <CardDescription className="text-base">
           {isSignUp
-            ? 'Sign up to start your diabetes care journey'
-            : 'Sign in to access your dashboard'}
+            ? 'Sign up to start your personalized Ayurvedic diabetes care journey'
+            : 'Sign in to access your dashboard and personalized plans'}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -180,14 +229,26 @@ export function AuthForm() {
               type="button"
               variant={usePhone ? 'default' : 'outline'}
               className="mr-2"
-              onClick={() => setUsePhone(true)}
+              onClick={() => {
+                setUsePhone(true)
+                setPasswordError('')
+                setEmail('')
+                setPassword('')
+                setConfirmPassword('')
+              }}
             >
               Phone
             </Button>
             <Button
               type="button"
               variant={!usePhone ? 'default' : 'outline'}
-              onClick={() => setUsePhone(false)}
+              onClick={() => {
+                setUsePhone(false)
+                setPasswordError('')
+                setPhone('')
+                setOtp('')
+                setOtpSent(false)
+              }}
             >
               Email
             </Button>
@@ -198,10 +259,11 @@ export function AuthForm() {
                 <Label htmlFor="country">Country Code</Label>
                 <select
                   id="country"
-                  className="w-full p-2 rounded border border-zinc-700 bg-zinc-900 text-white"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={countryCode}
                   onChange={e => setCountryCode(e.target.value)}
                   required
+                  disabled={loading}
                 >
                   {countryCodes.map(({ code, name }) => (
                     <option key={code} value={code}>{name} ({code})</option>
@@ -245,6 +307,7 @@ export function AuthForm() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="space-y-2">
@@ -252,11 +315,67 @@ export function AuthForm() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder={isSignUp ? "At least 6 characters" : "Enter your password"}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => {
+                    setPassword(e.target.value)
+                    setPasswordError('')
+                  }}
                   required
+                  disabled={loading}
                 />
+                {isSignUp && (
+                  <p className="text-xs text-muted-foreground">
+                    Password must be at least 6 characters long
+                  </p>
+                )}
               </div>
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Re-enter your password"
+                    value={confirmPassword}
+                    onChange={e => {
+                      setConfirmPassword(e.target.value)
+                      setPasswordError('')
+                    }}
+                    required
+                    disabled={loading}
+                  />
+                  {passwordError && (
+                    <p className="text-xs text-destructive">{passwordError}</p>
+                  )}
+                </div>
+              )}
+              {!isSignUp && (
+                <div className="text-right">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-xs h-auto p-0"
+                    onClick={async () => {
+                      if (!email) {
+                        toast.error('Please enter your email address first')
+                        return
+                      }
+                      try {
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: `${window.location.origin}/auth/reset-password`,
+                        })
+                        if (error) throw error
+                        toast.success('Password reset email sent! Check your inbox.')
+                      } catch (error: any) {
+                        toast.error(error?.message || 'Failed to send reset email')
+                      }
+                    }}
+                  >
+                    Forgot password?
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </CardContent>
@@ -288,10 +407,21 @@ export function AuthForm() {
             type="button"
             variant="link"
             className="w-full"
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {
+              setIsSignUp(!isSignUp)
+              setPasswordError('')
+              setPassword('')
+              setConfirmPassword('')
+              setEmail('')
+            }}
           >
             {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </Button>
+          {isSignUp && !usePhone && (
+            <p className="text-xs text-center text-muted-foreground">
+              By signing up, you agree to our Terms of Service and Privacy Policy
+            </p>
+          )}
         </CardFooter>
       </form>
     </Card>

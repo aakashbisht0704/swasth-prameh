@@ -1,5 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+CHATGPT_PROJECT_REPORT_PROMPT.md
+VPS_SETUP_GUIDE.md
+DOCKER_DEPLOYMENT_GUIDE.md
+
 # dependencies
 /node_modules
 /.pnp

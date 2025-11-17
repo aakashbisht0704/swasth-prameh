@@ -1,0 +1,43 @@
+{
+  "summary": "This is a sample 15-day Ayurvedic lifestyle plan designed for diabetes management. Your personalized plan will be generated based on your Prakriti assessment.",
+  "days": [
+    {
+      "day": 1,
+      "morning": "Wake up at 6 AM. Drink warm water with lemon. Practice 15 minutes of gentle yoga (Surya Namaskar).",
+      "meals": "Breakfast: Steamed vegetables with whole grain roti (7:30 AM)\nLunch: Dal, brown rice, seasonal vegetables (12:30 PM)\nSnack: Herbal tea with roasted chickpeas (4:00 PM)\nDinner: Light soup with vegetables (7:00 PM)",
+      "evening": "Light walk for 20 minutes. Meditation for 10 minutes before bed. Sleep by 10 PM."
+    },
+    {
+      "day": 2,
+      "morning": "Wake up at 6 AM. Drink warm water with turmeric. Practice breathing exercises (Pranayama) for 10 minutes.",
+      "meals": "Breakfast: Oatmeal with nuts and seeds (7:30 AM)\nLunch: Vegetable curry with quinoa (12:30 PM)\nSnack: Fresh fruit (4:00 PM)\nDinner: Moong dal khichdi (7:00 PM)",
+      "evening": "Gentle stretching. Herbal tea. Sleep by 10 PM."
+    },
+    {
+      "day": 3,
+      "morning": "Wake up at 6 AM. Warm water with honey and cinnamon. Yoga asanas for 20 minutes.",
+      "meals": "Breakfast: Sprouted moong salad (7:30 AM)\nLunch: Palak dal with brown rice (12:30 PM)\nSnack: Nuts and seeds mix (4:00 PM)\nDinner: Vegetable soup (7:00 PM)",
+      "evening": "Evening walk. Meditation. Sleep by 10 PM."
+    },
+    {
+      "day": 4,
+      "morning": "Wake up at 6 AM. Warm water. Surya Namaskar (12 rounds).",
+      "meals": "Breakfast: Vegetable upma (7:30 AM)\nLunch: Rajma curry with whole grain roti (12:30 PM)\nSnack: Herbal tea (4:00 PM)\nDinner: Light khichdi (7:00 PM)",
+      "evening": "Relaxation exercises. Sleep by 10 PM."
+    },
+    {
+      "day": 5,
+      "morning": "Wake up at 6 AM. Warm water with lemon. Pranayama practice.",
+      "meals": "Breakfast: Poha with vegetables (7:30 AM)\nLunch: Dal tadka with brown rice (12:30 PM)\nSnack: Fresh fruit (4:00 PM)\nDinner: Vegetable stew (7:00 PM)",
+      "evening": "Gentle yoga. Sleep by 10 PM."
+    }
+  ],
+  "notes": [
+    "All meals should be consumed at regular intervals",
+    "Stay hydrated with warm water throughout the day",
+    "Avoid processed foods and refined sugars",
+    "Practice portion control",
+    "Maintain consistent sleep schedule"
+  ]
+}
+

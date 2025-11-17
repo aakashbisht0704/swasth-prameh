@@ -11,12 +11,13 @@ import { Button } from './ui/button'
 import { supabase } from '@/lib/supabase'
 
 const navLinks = [
-  { label: 'About', href: '#about' },
-  { label: 'Features', href: '#features' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Plan Demo', href: '#sample-plan' },
+  { label: 'About Us', href: '#about' },
+  { label: 'Our Approach', href: '#approach' },
+  { label: 'Services', href: '#services' },
   { label: 'Testimonials', href: '#testimonials' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Blog/Resources', href: '#resources' },
+  { label: 'Contact Us', href: '#contact' },
+  { label: 'Patient Portal', href: '/dashboard', isCTA: true },
 ]
 
 function ThemeToggle() {
@@ -45,6 +46,7 @@ export function Navbar() {
   const isAuthPage = pathname === '/auth'
   const [isAuthed, setIsAuthed] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -60,6 +62,14 @@ export function Navbar() {
       mounted = false
       sub.subscription.unsubscribe()
     }
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   const handleSignOut = async () => {
@@ -90,7 +100,11 @@ export function Navbar() {
   if (isAuthPage) return null
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
+    <header className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
+      isScrolled 
+        ? 'border-border/60 bg-background/95 backdrop-blur-md shadow-sm' 
+        : 'border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60'
+    }`}>
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3">
           <span className="relative h-10 w-10 overflow-hidden rounded-full bg-primary/10">
@@ -109,18 +123,35 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground transition hover:text-primary"
-            >
-              {link.label}
-            </a>
-          ))}
-          <Link href="/assistant" className="text-sm font-medium text-muted-foreground transition hover:text-primary">
-            AI Assistant
-          </Link>
+          {navLinks.map((link) => {
+            if (link.isCTA) {
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium text-primary hover:text-primary/80 transition"
+                >
+                  {link.label}
+                </Link>
+              )
+            }
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={(e) => {
+                  if (link.href.startsWith('#')) {
+                    e.preventDefault()
+                    const element = document.getElementById(link.href.slice(1))
+                    element?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+                className="text-sm font-medium text-muted-foreground transition hover:text-primary"
+              >
+                {link.label}
+              </a>
+            )
+          })}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -138,7 +169,7 @@ export function Navbar() {
           )}
           <Link href={isAuthed ? '/dashboard' : '/auth'}>
             <Button size="sm" className="rounded-full bg-primary px-5 font-semibold">
-              {isAuthed ? 'Dashboard' : 'Get Started'}
+              {isAuthed ? 'Dashboard' : 'Get Your Personalized Plan'}
             </Button>
           </Link>
         </div>
@@ -170,23 +201,37 @@ export function Navbar() {
             className="border-t border-border/60 bg-background/95 px-4 pb-6 pt-4 shadow-lg lg:hidden"
           >
             <div className="flex flex-col gap-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {link.label}
-                </a>
-              ))}
-              <Link
-                href="/assistant"
-                className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                AI Assistant
-              </Link>
+              {navLinks.map((link) => {
+                if (link.isCTA) {
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="rounded-xl px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  )
+                }
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={(e) => {
+                      if (link.href.startsWith('#')) {
+                        e.preventDefault()
+                        const element = document.getElementById(link.href.slice(1))
+                        element?.scrollIntoView({ behavior: 'smooth' })
+                      }
+                      setIsMenuOpen(false)
+                    }}
+                    className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                  >
+                    {link.label}
+                  </a>
+                )
+              })}
               <div className="mt-2 flex flex-col gap-2">
                 {isAuthed ? (
                   <Button
@@ -206,7 +251,7 @@ export function Navbar() {
                 )}
                 <Link href={isAuthed ? '/dashboard' : '/auth'} onClick={() => setIsMenuOpen(false)}>
                   <Button className="w-full rounded-full bg-primary font-semibold">
-                    {isAuthed ? 'Dashboard' : 'Get Started'}
+                    {isAuthed ? 'Dashboard' : 'Get Your Personalized Plan'}
                   </Button>
                 </Link>
               </div>

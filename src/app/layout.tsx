@@ -13,8 +13,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://swasthprameh.ai'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'SwasthPrameh - AI-Enhanced Ayurvedic Care for Diabetes',
-  description: 'Personalized Ayurvedic treatment plans and monitoring for diabetes management.',
+  title: 'SwasthPrameh - Personalized Ayurvedic Diabetes Management | AI-Powered Plans',
+  description: 'Get personalized 15-day diet and lifestyle plans for Prameh (diabetes) management based on your unique Prakriti. Rooted in Ayurveda, personalized with AI.',
   keywords: [
     'SwasthPrameh',
     'Ayurveda',
