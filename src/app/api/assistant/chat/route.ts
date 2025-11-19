@@ -46,11 +46,16 @@ export async function POST(req: Request) {
 
     // Ensure URL is properly formatted
     let normalizedUrl = llmUrl.trim().replace(/\/$/, '')
-    // If URL doesn't have a protocol, default to http:// for localhost, https:// otherwise
+    // If URL doesn't have a protocol, determine the correct one
     if (!normalizedUrl.match(/^https?:\/\//)) {
-      if (normalizedUrl.includes('localhost') || normalizedUrl.includes('127.0.0.1')) {
+      // Docker service names or localhost should use HTTP
+      if (normalizedUrl.includes('localhost') || 
+          normalizedUrl.includes('127.0.0.1') || 
+          normalizedUrl.includes(':8002') || 
+          normalizedUrl.match(/^[a-z-]+:\d+$/)) { // Docker service names like "ml:8002"
         normalizedUrl = `http://${normalizedUrl}`
       } else {
+        // For public domains without explicit port, use HTTPS
         normalizedUrl = `https://${normalizedUrl}`
       }
     }
