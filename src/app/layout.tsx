@@ -6,6 +6,7 @@ import { Footer } from '@/components/footer'
 import { Providers } from './providers'
 import { ToastProvider } from '@/components/ToastProvider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ConditionalFooter } from '@/components/ConditionalFooter'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -68,7 +69,7 @@ export default function RootLayout({
               <main className="flex-1">
                 {children}
               </main>
-              <Footer />
+              <ConditionalFooter />
             </div>
           </ErrorBoundary>
         </Providers>

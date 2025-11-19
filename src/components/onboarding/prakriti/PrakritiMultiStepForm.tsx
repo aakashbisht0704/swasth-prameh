@@ -87,8 +87,13 @@ const createSteps = () => {
     ...prakritiQuestions.kapha.map(q => ({ ...q, dosha: 'kapha' }))
   ]
   
+  // Remove duplicates by question ID to ensure each question appears only once
+  const uniqueQuestions = Array.from(
+    new Map(allQuestions.map(q => [q.id, q])).values()
+  )
+  
   // Shuffle questions for variety
-  const shuffledQuestions = [...allQuestions].sort(() => Math.random() - 0.5)
+  const shuffledQuestions = [...uniqueQuestions].sort(() => Math.random() - 0.5)
   
   // Create steps with 4 questions each
   for (let i = 0; i < shuffledQuestions.length; i += 4) {
@@ -116,8 +121,62 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
   useEffect(() => {
     if (initialData?.prakriti_scores) {
       setScores(initialData.prakriti_scores)
+    } else {
+      // Initialize all questions to 0 if no initial data
+      // This ensures 0 is a valid default answer
+      const allQuestions = steps.flat()
+      setScores(prev => {
+        const updated = { ...prev }
+        let changed = false
+
+        allQuestions.forEach(q => {
+          const dosha = q.dosha as keyof PrakritiScores
+          if (updated[dosha][q.id] === undefined || updated[dosha][q.id] === null) {
+            updated[dosha] = {
+              ...updated[dosha],
+              [q.id]: 0
+            }
+            changed = true
+          }
+        })
+
+        return changed ? updated : prev
+      })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData])
+
+  // Initialize unanswered questions in current step to 0 when step changes
+  useEffect(() => {
+    if (currentStep >= 0 && currentStep < steps.length) {
+      const currentStepQuestions = steps[currentStep] || []
+      const needsInitialization = currentStepQuestions.some(q => {
+        const value = scores[q.dosha as keyof PrakritiScores][q.id]
+        return value === undefined || value === null
+      })
+
+      if (needsInitialization) {
+        setScores(prev => {
+          const updated = { ...prev }
+          let changed = false
+
+          currentStepQuestions.forEach(q => {
+            const dosha = q.dosha as keyof PrakritiScores
+            if (updated[dosha][q.id] === undefined || updated[dosha][q.id] === null) {
+              updated[dosha] = {
+                ...updated[dosha],
+                [q.id]: 0
+              }
+              changed = true
+            }
+          })
+
+          return changed ? updated : prev
+        })
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep])
 
   const handleQuestionChange = (questionId: string, dosha: string, value: number) => {
     setScores(prev => ({
@@ -131,20 +190,38 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
 
   const isCurrentStepComplete = () => {
     const currentStepQuestions = steps[currentStep]
-    return currentStepQuestions.every(q => (scores[q.dosha as keyof PrakritiScores][q.id] || 0) > 0)
+    // Check if all questions have been answered (value is defined, 0 is valid)
+    // Accept 0 as a valid answer - it means "not at all"
+    return currentStepQuestions.every(q => {
+      const value = scores[q.dosha as keyof PrakritiScores][q.id]
+      // Value is valid if it's a number (including 0) and not undefined/null
+      return typeof value === 'number' && value >= 0 && value <= 6
+    })
   }
 
   const isAllStepsComplete = () => {
     const allQuestions = steps.flat()
-    return allQuestions.every(q => (scores[q.dosha as keyof PrakritiScores][q.id] || 0) > 0)
+    // Check if all questions have been answered (value is defined, 0 is valid)
+    // Accept 0 as a valid answer - it means "not at all"
+    return allQuestions.every(q => {
+      const value = scores[q.dosha as keyof PrakritiScores][q.id]
+      // Value is valid if it's a number (including 0) and not undefined/null
+      return typeof value === 'number' && value >= 0 && value <= 6
+    })
   }
 
   const calculatePrakriti = () => {
-    // Calculate totals
+    // Calculate totals - only count defined values (0 is valid)
     const totals: PrakritiTotals = {
-      vata_total: Object.values(scores.vata).reduce((sum, score) => sum + score, 0),
-      pitta_total: Object.values(scores.pitta).reduce((sum, score) => sum + score, 0),
-      kapha_total: Object.values(scores.kapha).reduce((sum, score) => sum + score, 0)
+      vata_total: Object.values(scores.vata)
+        .filter(score => score !== undefined && score !== null)
+        .reduce((sum, score) => sum + (score || 0), 0),
+      pitta_total: Object.values(scores.pitta)
+        .filter(score => score !== undefined && score !== null)
+        .reduce((sum, score) => sum + (score || 0), 0),
+      kapha_total: Object.values(scores.kapha)
+        .filter(score => score !== undefined && score !== null)
+        .reduce((sum, score) => sum + (score || 0), 0)
     }
 
     // Determine dominant prakriti
@@ -152,37 +229,41 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
     const maxScore = Math.max(vata_total, pitta_total, kapha_total)
     const minScore = Math.min(vata_total, pitta_total, kapha_total)
     const difference = maxScore - minScore
-    const totalPossibleScore = 12 * 6 // 12 questions per dosha, max 6 points each
-    const percentageDifference = (difference / totalPossibleScore) * 100
+    const totalScore = vata_total + pitta_total + kapha_total
+    const percentageDifference = totalScore > 0 ? (difference / totalScore) * 100 : 0
 
     let dominant: string
     let mixed: string[] = []
     let explanation: string
 
-    if (percentageDifference < 5) {
-      // Balanced
+    // Determine which dosha(s) have the highest score
+    const doshaScores = [
+      { name: 'Vata', score: vata_total },
+      { name: 'Pitta', score: pitta_total },
+      { name: 'Kapha', score: kapha_total }
+    ].sort((a, b) => b.score - a.score)
+
+    if (percentageDifference < 5 || doshaScores[0].score === doshaScores[1].score) {
+      // Balanced or tied
       dominant = 'Balanced'
       explanation = 'You have a balanced constitution with all three doshas in harmony. This is rare and indicates excellent health potential.'
-    } else if (percentageDifference < 10) {
-      // Mixed constitution
-      const doshas = []
-      if (vata_total >= pitta_total && vata_total >= kapha_total) doshas.push('Vata')
-      if (pitta_total >= vata_total && pitta_total >= kapha_total) doshas.push('Pitta')
-      if (kapha_total >= vata_total && kapha_total >= pitta_total) doshas.push('Kapha')
+    } else if (percentageDifference < 15) {
+      // Mixed constitution - top two doshas are close
+      const topDoshas = doshaScores
+        .filter(d => Math.abs(d.score - doshaScores[0].score) <= (maxScore * 0.15))
+        .map(d => d.name)
       
       dominant = 'Mixed'
-      mixed = doshas
-      explanation = `You have a mixed constitution with ${doshas.join('-')} predominance. This creates a unique blend of characteristics.`
+      mixed = topDoshas
+      explanation = `You have a mixed constitution with ${topDoshas.join('-')} predominance. This creates a unique blend of characteristics.`
     } else {
       // Single dominant dosha
-      if (vata_total === maxScore) {
-        dominant = 'Vata'
+      dominant = doshaScores[0].name
+      if (dominant === 'Vata') {
         explanation = 'You have a Vata-dominant constitution. You tend to be creative, energetic, and adaptable, but may experience anxiety and irregularity.'
-      } else if (pitta_total === maxScore) {
-        dominant = 'Pitta'
+      } else if (dominant === 'Pitta') {
         explanation = 'You have a Pitta-dominant constitution. You are driven, focused, and intelligent, but may be prone to anger and perfectionism.'
       } else {
-        dominant = 'Kapha'
         explanation = 'You have a Kapha-dominant constitution. You are stable, loyal, and compassionate, but may struggle with inertia and weight gain.'
       }
     }
@@ -227,7 +308,7 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
   }
 
   const totalQuestions = steps.flat().length
-  const answeredQuestions = Object.values(scores).flatMap(Object.values).filter(score => score > 0).length
+  const answeredQuestions = Object.values(scores).flatMap(Object.values).filter(score => score !== undefined && score !== null).length
   const progressPercentage = (answeredQuestions / totalQuestions) * 100
 
   return (
@@ -260,15 +341,25 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {steps[currentStep]?.map((question) => (
-            <PrakritiQuestion
-              key={question.id}
-              id={question.id}
-              label={question.label}
-              value={scores[question.dosha as keyof PrakritiScores][question.id] || 0}
-              onChange={(value) => handleQuestionChange(question.id, question.dosha, value)}
-            />
-          ))}
+          {steps[currentStep]?.map((question) => {
+            const currentValue = scores[question.dosha as keyof PrakritiScores][question.id]
+            // Use the current value, or 0 if undefined (should be initialized by useEffect)
+            const displayValue = currentValue !== undefined && currentValue !== null ? currentValue : 0
+            
+            return (
+              <PrakritiQuestion
+                key={question.id}
+                id={question.id}
+                label={question.label}
+                value={displayValue}
+                onChange={(value) => {
+                  // Always update the state, even if value is 0
+                  // This ensures 0 is saved as a valid answer
+                  handleQuestionChange(question.id, question.dosha, value)
+                }}
+              />
+            )
+          })}
         </CardContent>
       </Card>
 

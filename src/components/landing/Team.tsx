@@ -8,14 +8,14 @@ const ayurvedicDoctors = [
   {
     name: 'Dr. Konica Gera',
     credentials: 'BAMS, MD',
-    role: 'Assistant Professor',
+    role: 'Associate Professor',
     affiliation: 'SGT University (FIMS)',
     image: '/Konica.PNG',
   },
   {
     name: 'Dr. Abhilasha Bhardwaj',
     credentials: 'BAMS, MD',
-    role: 'Associate Professor',
+    role: 'Assistant Professor',
     affiliation: 'SGT University (FIMS)',
     image: '/Abhilasha.PNG',
   },

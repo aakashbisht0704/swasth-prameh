@@ -72,15 +72,27 @@ export function LifestyleCard({ onboarding }: LifestyleCardProps) {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Diet:</span>
-          <span className="text-foreground font-medium">{onboarding?.diet || 'Not specified'}</span>
+          <span className="text-foreground font-medium">
+            {onboarding?.lifestyle?.diet_type 
+              ? onboarding.lifestyle.diet_type.charAt(0).toUpperCase() + onboarding.lifestyle.diet_type.slice(1)
+              : 'Not specified'}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Exercise:</span>
-          <span className="text-foreground font-medium">{onboarding?.exercise || 'Not specified'}</span>
+          <span className="text-foreground font-medium">
+            {onboarding?.lifestyle?.exercise_regularly 
+              ? onboarding.lifestyle.exercise_regularly === 'Yes' ? 'Regular' : 'Irregular'
+              : 'Not specified'}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Sleep:</span>
-          <span className="text-foreground font-medium">{onboarding?.sleep || 'Not specified'}</span>
+          <span className="text-foreground font-medium">
+            {onboarding?.lifestyle?.sleep_hours 
+              ? `${onboarding.lifestyle.sleep_hours} hours`
+              : 'Not specified'}
+          </span>
         </div>
       </div>
     </OverviewCard>

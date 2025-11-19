@@ -45,20 +45,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'LLM_SERVER_URL not set' }, { status: 500 })
     }
 
-    const res = await fetch(`${llmUrl.replace(/\/$/, '')}/generate-plan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id, context }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      console.error('LLM error:', data)
-      return NextResponse.json({ error: data?.error || 'LLM error' }, { status: 500 })
+    // Ensure URL is properly formatted
+    let normalizedUrl = llmUrl.trim().replace(/\/$/, '')
+    // If URL doesn't have a protocol, default to http:// for localhost, https:// otherwise
+    if (!normalizedUrl.match(/^https?:\/\//)) {
+      if (normalizedUrl.includes('localhost') || normalizedUrl.includes('127.0.0.1')) {
+        normalizedUrl = `http://${normalizedUrl}`
+      } else {
+        normalizedUrl = `https://${normalizedUrl}`
+      }
     }
-    
-    console.log('Plan generated successfully')
-    return NextResponse.json(data)
+
+    console.log('Calling LLM service at:', `${normalizedUrl}/generate-plan`)
+
+    try {
+      const res = await fetch(`${normalizedUrl}/generate-plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id, context }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        console.error('LLM error:', data)
+        return NextResponse.json({ error: data?.error || 'LLM error' }, { status: 500 })
+      }
+      
+      console.log('Plan generated successfully')
+      return NextResponse.json(data)
+    } catch (fetchError: any) {
+      // Handle SSL/connection errors
+      if (fetchError.message?.includes('SSL') || fetchError.code === 'ERR_SSL_WRONG_VERSION_NUMBER') {
+        console.error('SSL/Connection error. Check LLM_SERVER_URL protocol (http vs https):', normalizedUrl)
+        return NextResponse.json({ 
+          error: `Connection error: ${fetchError.message}. Please check LLM_SERVER_URL is using the correct protocol (http:// for localhost, https:// for production).` 
+        }, { status: 500 })
+      }
+      throw fetchError
+    }
   } catch (e: any) {
     console.error('Generate plan error:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })

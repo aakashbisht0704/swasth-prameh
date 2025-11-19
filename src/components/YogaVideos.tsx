@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-hot-toast'
 import { X } from 'lucide-react'
+import { trackActivity } from '@/lib/activity-tracking'
 
 interface YogaVideo {
   id: string
@@ -28,6 +29,8 @@ export function YogaVideos({ userId }: YogaVideosProps) {
   const [loading, setLoading] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedVideo, setSelectedVideo] = useState<YogaVideo | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const watchStartTime = useRef<number>(0)
 
   useEffect(() => {
     loadVideos()
@@ -258,7 +261,14 @@ export function YogaVideos({ userId }: YogaVideosProps) {
                     </div>
                     <Button 
                       className="w-full rounded-xl" 
-                      onClick={() => setSelectedVideo(video)}
+                      onClick={async () => {
+                        await trackActivity(userId, 'yoga_video_click', {
+                          video_id: video.id,
+                          video_title: video.title,
+                        })
+                        setSelectedVideo(video)
+                        watchStartTime.current = Date.now()
+                      }}
                     >
                       Start Now!!!
                     </Button>
@@ -341,7 +351,24 @@ export function YogaVideos({ userId }: YogaVideosProps) {
               variant="ghost"
               size="icon"
               className="absolute top-4 right-4 z-10 hover:bg-destructive hover:text-destructive-foreground"
-              onClick={() => setSelectedVideo(null)}
+              onClick={async () => {
+                // Track watch time when closing
+                if (videoRef.current && watchStartTime.current > 0) {
+                  const duration = videoRef.current.duration || 0
+                  const watchTime = Date.now() - watchStartTime.current
+                  // Track if watched for at least 30 seconds or 50% of video
+                  if (watchTime > 30000 || (duration > 0 && watchTime > duration * 500)) {
+                    await trackActivity(userId, 'yoga_video_watch', {
+                      video_id: selectedVideo.id,
+                      video_title: selectedVideo.title,
+                      video_duration: Math.round(duration),
+                      watch_time: Math.round(watchTime / 1000), // in seconds
+                    })
+                  }
+                }
+                setSelectedVideo(null)
+                watchStartTime.current = 0
+              }}
             >
               <X className="h-6 w-6" />
             </Button>
@@ -352,11 +379,27 @@ export function YogaVideos({ userId }: YogaVideosProps) {
               
               <div className="aspect-video bg-black rounded-lg overflow-hidden">
                 <video
+                  ref={videoRef}
                   src={selectedVideo.video_url}
                   controls
                   autoPlay
                   className="w-full h-full object-contain"
                   controlsList="nodownload"
+                  onEnded={async () => {
+                    if (videoRef.current) {
+                      const duration = videoRef.current.duration || 0
+                      const watchTime = Date.now() - watchStartTime.current
+                      // Track if watched for at least 50% of video or 30 seconds
+                      if (watchTime > 30000 || (duration > 0 && watchTime > duration * 500)) {
+                        await trackActivity(userId, 'yoga_video_watch', {
+                          video_id: selectedVideo.id,
+                          video_title: selectedVideo.title,
+                          video_duration: Math.round(duration),
+                          watch_time: Math.round(watchTime / 1000), // in seconds
+                        })
+                      }
+                    }
+                  }}
                 >
                   Your browser does not support the video tag.
                 </video>

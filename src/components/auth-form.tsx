@@ -6,22 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
-import countryCodes from './country-codes.json' // You need to create this file or use a package
 import { useRouter } from 'next/navigation'
 import { ensureUserExists, getRedirectUrl } from '@/lib/auth-utils'
 import toast from 'react-hot-toast'
 
 export function AuthForm() {
   const [isSignUp, setIsSignUp] = useState(false)
-  const [usePhone, setUsePhone] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [phone, setPhone] = useState('')
-  const [otp, setOtp] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [countryCode, setCountryCode] = useState('+1')
   const [passwordError, setPasswordError] = useState('')
   const router = useRouter();
 
@@ -44,7 +38,7 @@ export function AuthForm() {
   };
 
   const validatePassword = (): boolean => {
-    if (isSignUp && !usePhone) {
+    if (isSignUp) {
       if (password.length < 6) {
         setPasswordError('Password must be at least 6 characters long')
         return false
@@ -62,7 +56,7 @@ export function AuthForm() {
     e.preventDefault()
     
     // Validate password for signup
-    if (isSignUp && !usePhone && !validatePassword()) {
+    if (isSignUp && !validatePassword()) {
       return
     }
     
@@ -70,45 +64,13 @@ export function AuthForm() {
     setPasswordError('')
     
     try {
-      if (usePhone) {
-        const fullPhone = `${countryCode}${phone.replace(/^0+/, '')}`
-        if (!otpSent) {
-          // Send OTP
-          const { error } = await supabase.auth.signInWithOtp({
-            phone: fullPhone,
-            options: { channel: 'sms' },
-          })
-          if (error) throw error
-          setOtpSent(true)
-          toast.success('OTP sent to your phone number.')
-        } else {
-          // Verify OTP
-          const { error } = await supabase.auth.verifyOtp({
-            phone: fullPhone,
-            token: otp,
-            type: 'sms',
-          })
-          if (error) throw error
-          toast.success('Phone authentication successful!')
-          await handlePostAuthRedirect();
-        }
-      } else {
-        if (isSignUp) {
-          // Determine redirect URL - prioritize environment variable, but ensure it's not localhost in production
-          let emailRedirectUrl: string
-          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
-          const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      if (isSignUp) {
+          // Always use the current origin for email redirects to ensure consistency
+          // This way, emails sent from localhost redirect to localhost, and emails from production redirect to production
+          const emailRedirectUrl = `${location.origin}/auth/callback`
           
-          if (siteUrl && !siteUrl.includes('localhost') && !isLocalhost) {
-            // Use environment variable if set and not localhost (production)
-            emailRedirectUrl = `${siteUrl}/auth/callback`
-          } else if (isLocalhost) {
-            // Development - use localhost
-            emailRedirectUrl = `${location.origin}/auth/callback`
-          } else {
-            // Production without env var - use current origin (should be your domain)
-            emailRedirectUrl = `${location.origin}/auth/callback`
-          }
+          console.log('Sign up - Email redirect URL:', emailRedirectUrl)
+          console.log('Current origin:', location.origin)
           
           const { data, error } = await supabase.auth.signUp({
             email,
@@ -133,24 +95,23 @@ export function AuthForm() {
             toast.success('Account created successfully!')
             await handlePostAuthRedirect()
           }
-        } else {
-          // Sign in
-          const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          })
-          if (error) {
-            // Handle specific error cases
-            if (error.message.includes('Invalid login credentials')) {
-              throw new Error('Invalid email or password. Please check your credentials and try again.')
-            } else if (error.message.includes('Email not confirmed')) {
-              throw new Error('Please verify your email address before signing in. Check your inbox for the confirmation link.')
-            }
-            throw error
+      } else {
+        // Sign in
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (error) {
+          // Handle specific error cases
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('Invalid email or password. Please check your credentials and try again.')
+          } else if (error.message.includes('Email not confirmed')) {
+            throw new Error('Please verify your email address before signing in. Check your inbox for the confirmation link.')
           }
-          toast.success('Signed in successfully!')
-          await handlePostAuthRedirect()
+          throw error
         }
+        toast.success('Signed in successfully!')
+        await handlePostAuthRedirect()
       }
     } catch (error: any) {
       console.error('Authentication error:', error)
@@ -224,159 +185,83 @@ export function AuthForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="flex justify-center mb-2">
-            <Button
-              type="button"
-              variant={usePhone ? 'default' : 'outline'}
-              className="mr-2"
-              onClick={() => {
-                setUsePhone(true)
-                setPasswordError('')
-                setEmail('')
-                setPassword('')
-                setConfirmPassword('')
-              }}
-            >
-              Phone
-            </Button>
-            <Button
-              type="button"
-              variant={!usePhone ? 'default' : 'outline'}
-              onClick={() => {
-                setUsePhone(false)
-                setPasswordError('')
-                setPhone('')
-                setOtp('')
-                setOtpSent(false)
-              }}
-            >
-              Email
-            </Button>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
           </div>
-          {usePhone ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="country">Country Code</Label>
-                <select
-                  id="country"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={countryCode}
-                  onChange={e => setCountryCode(e.target.value)}
-                  required
-                  disabled={loading}
-                >
-                  {countryCodes.map(({ code, name }) => (
-                    <option key={code} value={code}>{name} ({code})</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="555 123 4567"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  required
-                  disabled={otpSent}
-                />
-              </div>
-              {otpSent && (
-                <div className="space-y-2">
-                  <Label htmlFor="otp">Enter OTP</Label>
-                  <Input
-                    id="otp"
-                    type="text"
-                    placeholder="123456"
-                    value={otp}
-                    onChange={e => setOtp(e.target.value)}
-                    required
-                  />
-                </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder={isSignUp ? "At least 6 characters" : "Enter your password"}
+              value={password}
+              onChange={e => {
+                setPassword(e.target.value)
+                setPasswordError('')
+              }}
+              required
+              disabled={loading}
+            />
+            {isSignUp && (
+              <p className="text-xs text-muted-foreground">
+                Password must be at least 6 characters long
+              </p>
+            )}
+          </div>
+          {isSignUp && (
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={e => {
+                  setConfirmPassword(e.target.value)
+                  setPasswordError('')
+                }}
+                required
+                disabled={loading}
+              />
+              {passwordError && (
+                <p className="text-xs text-destructive">{passwordError}</p>
               )}
-            </>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder={isSignUp ? "At least 6 characters" : "Enter your password"}
-                  value={password}
-                  onChange={e => {
-                    setPassword(e.target.value)
-                    setPasswordError('')
-                  }}
-                  required
-                  disabled={loading}
-                />
-                {isSignUp && (
-                  <p className="text-xs text-muted-foreground">
-                    Password must be at least 6 characters long
-                  </p>
-                )}
-              </div>
-              {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Re-enter your password"
-                    value={confirmPassword}
-                    onChange={e => {
-                      setConfirmPassword(e.target.value)
-                      setPasswordError('')
-                    }}
-                    required
-                    disabled={loading}
-                  />
-                  {passwordError && (
-                    <p className="text-xs text-destructive">{passwordError}</p>
-                  )}
-                </div>
-              )}
-              {!isSignUp && (
-                <div className="text-right">
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="text-xs h-auto p-0"
-                    onClick={async () => {
-                      if (!email) {
-                        toast.error('Please enter your email address first')
-                        return
-                      }
-                      try {
-                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                          redirectTo: `${window.location.origin}/auth/reset-password`,
-                        })
-                        if (error) throw error
-                        toast.success('Password reset email sent! Check your inbox.')
-                      } catch (error: any) {
-                        toast.error(error?.message || 'Failed to send reset email')
-                      }
-                    }}
-                  >
-                    Forgot password?
-                  </Button>
-                </div>
-              )}
-            </>
+            </div>
+          )}
+          {!isSignUp && (
+            <div className="text-right">
+              <Button
+                type="button"
+                variant="link"
+                className="text-xs h-auto p-0"
+                onClick={async () => {
+                  if (!email) {
+                    toast.error('Please enter your email address first')
+                    return
+                  }
+                  try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                      redirectTo: `${window.location.origin}/auth/reset-password`,
+                    })
+                    if (error) throw error
+                    toast.success('Password reset email sent! Check your inbox.')
+                  } catch (error: any) {
+                    toast.error(error?.message || 'Failed to send reset email')
+                  }
+                }}
+              >
+                Forgot password?
+              </Button>
+            </div>
           )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
@@ -387,13 +272,9 @@ export function AuthForm() {
           >
             {loading
               ? 'Processing...'
-              : usePhone
-                ? otpSent
-                  ? 'Verify OTP'
-                  : 'Send OTP'
-                : isSignUp
-                  ? 'Sign Up'
-                  : 'Sign In'}
+              : isSignUp
+                ? 'Sign Up'
+                : 'Sign In'}
           </Button>
           <Button
             type="button"
@@ -417,7 +298,7 @@ export function AuthForm() {
           >
             {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </Button>
-          {isSignUp && !usePhone && (
+          {isSignUp && (
             <p className="text-xs text-center text-muted-foreground">
               By signing up, you agree to our Terms of Service and Privacy Policy
             </p>

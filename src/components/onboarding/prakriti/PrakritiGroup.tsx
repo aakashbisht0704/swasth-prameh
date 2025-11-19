@@ -25,7 +25,8 @@ export function PrakritiGroup({ title, questions, scores, onScoresChange, disabl
     })
   }
 
-  const answeredQuestions = Object.values(scores).filter(score => score > 0).length
+  // Count questions that have been answered (0 is a valid answer)
+  const answeredQuestions = Object.values(scores).filter(score => score !== undefined && score !== null).length
 
   return (
     <Card className="w-full">

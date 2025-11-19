@@ -22,10 +22,19 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // Ignore hydration errors - they're usually not critical
+    if (error.message?.includes('hydration') || error.message?.includes('Hydration')) {
+      console.warn('Hydration error caught (ignored):', error.message)
+      return { hasError: false }
+    }
     return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Don't log hydration errors as they're expected during development
+    if (error.message?.includes('hydration') || error.message?.includes('Hydration')) {
+      return
+    }
     console.error('ErrorBoundary caught an error:', error, errorInfo)
   }
 

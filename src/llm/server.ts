@@ -43,7 +43,7 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: SYSTEM_PROMPT_PLAN_GENERATION + '\n\nOutput STRICT JSON only, with schema: {"summary": string, "plan": [{"day": number, "morning": string, "meals": string, "evening": string}], "markdown_table": string}. The markdown_table should be a formatted table. Do not include any extra text.'
+        content: SYSTEM_PROMPT_PLAN_GENERATION + '\n\nOutput STRICT JSON only, with schema: {"summary": string, "plan": [{"day": number, "morning": string, "breakfast": string, "lunch": string, "dinner": string, "evening": string}], "markdown_table": string}. IMPORTANT: The "breakfast", "lunch", and "dinner" fields must be separate strings. Do NOT combine them into a single "meals" field. The markdown_table should be a formatted table. Do not include any extra text.'
       },
       { role: 'user', content: JSON.stringify(context) }
     ]
@@ -56,7 +56,9 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
         plan: Array.from({ length: 15 }).map((_, i) => ({
           day: i + 1,
           morning: '10 min breathwork + light stretching',
-          meals: 'Warm, lightly spiced, low-sugar balanced meals',
+          breakfast: 'Warm, lightly spiced breakfast',
+          lunch: 'Balanced, low-sugar lunch',
+          dinner: 'Light, early dinner',
           evening: '20 min walk; digital sunset 1 hour before bed'
         }))
       }
@@ -99,7 +101,9 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
         const plan = Array.from({ length: 15 }).map((_, i) => ({
           day: i + 1,
           morning: '10 min breathwork + gentle stretching',
-          meals: 'Balanced, warm, low-sugar meals aligned to dosha moderation',
+          breakfast: 'Warm, balanced breakfast aligned to dosha',
+          lunch: 'Balanced, warm, low-sugar lunch',
+          dinner: 'Light, early dinner aligned to dosha',
           evening: '20 min walk; 5 min mindfulness; regular sleep time'
         }))
         parsed = { summary, plan }

@@ -100,9 +100,9 @@ export function Navbar() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  if (isAuthPage) return null
-
   const [isMoreHovered, setIsMoreHovered] = useState(false)
+
+  if (isAuthPage) return null
 
   return (
     <header className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
@@ -112,32 +112,32 @@ export function Navbar() {
     }`}>
       <div className="container flex h-24 items-center justify-between gap-4">
         <Link href="/" className="flex items-center">
-          <Image
-            src="/logo.png"
-            alt="SwasthPrameh logo"
+            <Image
+              src="/logoSP.png"
+              alt="SwasthPrameh logo"
             width={80}
             height={80}
-            className="object-contain"
-            priority
-          />
+              className="object-contain"
+              priority
+            />
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
           {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => {
-                if (link.href.startsWith('#')) {
-                  e.preventDefault()
-                  const element = document.getElementById(link.href.slice(1))
-                  element?.scrollIntoView({ behavior: 'smooth' })
-                }
-              }}
-              className="text-sm font-medium text-muted-foreground transition hover:text-primary"
-            >
-              {link.label}
-            </a>
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={(e) => {
+                  if (link.href.startsWith('#')) {
+                    e.preventDefault()
+                    const element = document.getElementById(link.href.slice(1))
+                    element?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
+                className="text-sm font-medium text-muted-foreground transition hover:text-primary"
+              >
+                {link.label}
+              </a>
           ))}
           
           {/* More Dropdown */}
@@ -240,21 +240,21 @@ export function Navbar() {
           >
             <div className="flex flex-col gap-3">
               {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={(e) => {
-                    if (link.href.startsWith('#')) {
-                      e.preventDefault()
-                      const element = document.getElementById(link.href.slice(1))
-                      element?.scrollIntoView({ behavior: 'smooth' })
-                    }
-                    setIsMenuOpen(false)
-                  }}
-                  className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                >
-                  {link.label}
-                </a>
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={(e) => {
+                      if (link.href.startsWith('#')) {
+                        e.preventDefault()
+                        const element = document.getElementById(link.href.slice(1))
+                        element?.scrollIntoView({ behavior: 'smooth' })
+                      }
+                      setIsMenuOpen(false)
+                    }}
+                    className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                  >
+                    {link.label}
+                  </a>
               ))}
               
               {/* More Dropdown in Mobile */}

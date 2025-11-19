@@ -93,8 +93,8 @@ export function Contact() {
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">Email</p>
-                    <a href="mailto:hello@swasthprameh.com" className="text-muted-foreground hover:text-primary transition">
-                      hello@swasthprameh.com
+                    <a href="mailto:info@sgtuniversity.org" className="text-muted-foreground hover:text-primary transition">
+                      info@sgtuniversity.org
                     </a>
                   </div>
                 </div>
@@ -105,8 +105,8 @@ export function Contact() {
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">Phone / WhatsApp</p>
-                    <a href="tel:+911234567890" className="text-muted-foreground hover:text-primary transition">
-                      +91 123 456 7890
+                    <a href="tel:18001025661" className="text-muted-foreground hover:text-primary transition">
+                      1800 102 5661
                     </a>
                   </div>
                 </div>
@@ -118,14 +118,13 @@ export function Contact() {
                   <div>
                     <p className="font-semibold text-foreground">Address</p>
                     <p className="text-muted-foreground">
-                      123 Wellness Street<br />
-                      Health City, HC 12345<br />
-                      India
+                      Budhera, Gururam-Badli Road, Gurugram-122505,<br />
+                      Haryana, India
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
+                {/* <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <MessageSquare className="h-6 w-6" />
                   </div>
@@ -135,15 +134,35 @@ export function Contact() {
                       Follow us for health tips and updates
                     </p>
                   </div>
-                </div>
+                </div> */}
               </CardContent>
             </Card>
 
-            {/* Map Placeholder */}
+            {/* Map Embed */}
             <Card className="border-border/50">
               <CardContent className="p-0">
-                <div className="aspect-video w-full bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground">Map placeholder</p>
+                <div className="aspect-video w-full rounded-lg overflow-hidden">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3506.1234567890!2d76.902307!3d28.4817735!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d14493fffffff%3A0xc0cc5b9b791204ca!2sSGT%20University!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="w-full h-full"
+                    title="SGT University Location"
+                  />
+                </div>
+                <div className="p-4 text-center">
+                  <a
+                    href="https://maps.app.goo.gl/87184r231fRBWEc37"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Open in Google Maps
+                  </a>
                 </div>
               </CardContent>
             </Card>

@@ -33,22 +33,22 @@ export function ReportUploadStep({ onNext, onBack, initialData }: any) {
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    if (uploadedUrl) {
-      onNext({ report_url: uploadedUrl });
-    } else {
-      alert('Please upload your report first.');
-    }
+    // Report upload is optional - proceed with or without URL
+    onNext({ report_url: uploadedUrl || null });
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>Upload Medical Reports</CardTitle>
+          <CardTitle>Upload Medical Reports (Optional)</CardTitle>
+          <div className="text-sm text-muted-foreground">
+            You can skip this step if you don't have reports to upload.
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="report">Upload your recent lab reports (PDF, JPG, PNG)</Label>
+            <Label htmlFor="report">Upload your recent lab reports (PDF, JPG, PNG) - Optional</Label>
             <input
               id="report"
               type="file"
@@ -74,7 +74,7 @@ export function ReportUploadStep({ onNext, onBack, initialData }: any) {
       </Card>
       <div className="flex justify-between mt-6">
         <Button type="button" variant="outline" onClick={onBack}>Back</Button>
-        <Button type="submit">Next</Button>
+        <Button type="submit">{uploadedUrl ? 'Continue' : 'Skip & Continue'}</Button>
       </div>
     </form>
   );

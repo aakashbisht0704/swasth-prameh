@@ -23,6 +23,9 @@ export function PrakritiQuestion({ id, label, value, onChange, disabled = false 
     'Completely'
   ]
 
+  // Ensure value is always a number (0-6)
+  const sliderValue = typeof value === 'number' ? value : 0
+
   return (
     <div className="space-y-3">
       <Label htmlFor={id} className="text-sm font-medium leading-relaxed">
@@ -35,8 +38,12 @@ export function PrakritiQuestion({ id, label, value, onChange, disabled = false 
           min={0}
           max={6}
           step={1}
-          value={[value]}
-          onValueChange={(values) => onChange(values[0])}
+          value={[sliderValue]}
+          onValueChange={(values) => {
+            // Always call onChange, even if value is 0
+            const newValue = values[0]
+            onChange(newValue)
+          }}
           disabled={disabled}
           className="w-full"
         />
@@ -54,12 +61,12 @@ export function PrakritiQuestion({ id, label, value, onChange, disabled = false 
         <div className="text-center">
           <span className={cn(
             "text-sm font-medium",
-            value === 0 && "text-muted-foreground",
-            value > 0 && value < 3 && "text-blue-600 dark:text-blue-400",
-            value >= 3 && value < 5 && "text-purple-600 dark:text-purple-400", 
-            value >= 5 && "text-green-600 dark:text-green-400"
+            sliderValue === 0 && "text-muted-foreground",
+            sliderValue > 0 && sliderValue < 3 && "text-blue-600 dark:text-blue-400",
+            sliderValue >= 3 && sliderValue < 5 && "text-purple-600 dark:text-purple-400", 
+            sliderValue >= 5 && "text-green-600 dark:text-green-400"
           )}>
-            {intensityLabels[value]}
+            {intensityLabels[sliderValue]}
           </span>
         </div>
       </div>

@@ -2,11 +2,15 @@
 
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { trackActivity } from '@/lib/activity-tracking'
 
 export default function DashboardAIWidget({ userId, context }: { userId: string, context: any }) {
   const router = useRouter()
 
-  const handleGetRecommendations = () => {
+  const handleGetRecommendations = async () => {
+    // Track the click
+    await trackActivity(userId, 'ai_recommendations_click')
+    
     // Route to /assistant and seed the session with context
     try {
       sessionStorage.setItem('assistant_seed', JSON.stringify({ userId, context }))

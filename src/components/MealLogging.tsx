@@ -6,12 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
+import { trackActivity } from '@/lib/activity-tracking'
 
 interface PlanDay {
   day: number
   morning: string
-  meals: string
+  meals: string // Legacy format: "Breakfast: ... Lunch: ... Dinner: ..."
   evening: string
+  // New structured format (optional for backward compatibility)
+  breakfast?: string
+  lunch?: string
+  dinner?: string
 }
 
 interface Plan {
@@ -180,6 +185,9 @@ export function MealLogging({ userId }: MealLoggingProps) {
   const handleGeneratePlan = async () => {
     setLoading(true)
     try {
+      // Track the click
+      await trackActivity(userId, 'generate_plan_click')
+      
       const response = await fetch('/api/plans/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -246,10 +254,107 @@ export function MealLogging({ userId }: MealLoggingProps) {
                   </div>
                   
                   <div>
-                    <h4 className="font-semibold text-sm text-primary mb-1 flex items-center">
+                    <h4 className="font-semibold text-sm text-primary mb-2 flex items-center">
                       🍽️ Meals
                     </h4>
-                    <p className="text-sm text-muted-foreground">{day.meals}</p>
+                    <div className="space-y-3">
+                      {(() => {
+                        // Check if we have new structured format (all three meals as separate fields)
+                        const hasNewFormat = day.breakfast && day.lunch && day.dinner
+                        
+                        if (hasNewFormat) {
+                          // New structured format - all three meals exist
+                          return (
+                            <>
+                              <div>
+                                <span className="font-bold text-sm text-foreground">Breakfast:</span>
+                                <p className="text-sm text-muted-foreground mt-1 ml-0">{day.breakfast}</p>
+                              </div>
+                              <div>
+                                <span className="font-bold text-sm text-foreground">Lunch:</span>
+                                <p className="text-sm text-muted-foreground mt-1 ml-0">{day.lunch}</p>
+                              </div>
+                              <div>
+                                <span className="font-bold text-sm text-foreground">Dinner:</span>
+                                <p className="text-sm text-muted-foreground mt-1 ml-0">{day.dinner}</p>
+                              </div>
+                            </>
+                          )
+                        }
+                        
+                        // Try to parse legacy format from meals field
+                        const mealsText = day.meals || ''
+                        if (mealsText) {
+                          // Better parsing: split by meal keywords and extract content
+                          // Use [\s\S] instead of . to match any character including newlines
+                          const breakfastRegex = /Breakfast[:\s]+([\s\S]+?)(?=\s*(?:Lunch|Dinner|$))/i
+                          const lunchRegex = /Lunch[:\s]+([\s\S]+?)(?=\s*(?:Dinner|$))/i
+                          const dinnerRegex = /Dinner[:\s]+([\s\S]+?)(?=\s*(?:Breakfast|Lunch|$)|$)/i
+                          
+                          const breakfastMatch = mealsText.match(breakfastRegex)
+                          const lunchMatch = mealsText.match(lunchRegex)
+                          const dinnerMatch = mealsText.match(dinnerRegex)
+                          
+                          // If we found at least one meal, display them
+                          if (breakfastMatch || lunchMatch || dinnerMatch) {
+                            return (
+                              <>
+                                {breakfastMatch && (
+                                  <div>
+                                    <span className="font-bold text-sm text-foreground">Breakfast:</span>
+                                    <p className="text-sm text-muted-foreground mt-1 ml-0">{breakfastMatch[1].trim().replace(/\.$/, '')}</p>
+                                  </div>
+                                )}
+                                {lunchMatch && (
+                                  <div>
+                                    <span className="font-bold text-sm text-foreground">Lunch:</span>
+                                    <p className="text-sm text-muted-foreground mt-1 ml-0">{lunchMatch[1].trim().replace(/\.$/, '')}</p>
+                                  </div>
+                                )}
+                                {dinnerMatch && (
+                                  <div>
+                                    <span className="font-bold text-sm text-foreground">Dinner:</span>
+                                    <p className="text-sm text-muted-foreground mt-1 ml-0">{dinnerMatch[1].trim().replace(/\.$/, '')}</p>
+                                  </div>
+                                )}
+                              </>
+                            )
+                          }
+                          
+                          // Fallback: show as-is if parsing fails
+                          return <p className="text-sm text-muted-foreground">{day.meals}</p>
+                        }
+                        
+                        // If we have partial new format (some meals but not all), show what we have
+                        if (day.breakfast || day.lunch || day.dinner) {
+                          return (
+                            <>
+                              {day.breakfast && (
+                                <div>
+                                  <span className="font-bold text-sm text-foreground">Breakfast:</span>
+                                  <p className="text-sm text-muted-foreground mt-1 ml-0">{day.breakfast}</p>
+                                </div>
+                              )}
+                              {day.lunch && (
+                                <div>
+                                  <span className="font-bold text-sm text-foreground">Lunch:</span>
+                                  <p className="text-sm text-muted-foreground mt-1 ml-0">{day.lunch}</p>
+                                </div>
+                              )}
+                              {day.dinner && (
+                                <div>
+                                  <span className="font-bold text-sm text-foreground">Dinner:</span>
+                                  <p className="text-sm text-muted-foreground mt-1 ml-0">{day.dinner}</p>
+                                </div>
+                              )}
+                            </>
+                          )
+                        }
+                        
+                        // Final fallback
+                        return <p className="text-sm text-muted-foreground">No meal information available</p>
+                      })()}
+                    </div>
                   </div>
                   
                   <div>

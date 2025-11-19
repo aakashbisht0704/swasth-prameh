@@ -10,13 +10,13 @@ const articles = [
   {
     title: 'Understanding Prakriti: Your Ayurvedic Constitution',
     description: 'Learn how your unique Prakriti influences your health and how we use it to personalize your diabetes management plan.',
-    image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
+    image: '/blog1.jpg',
     url: 'https://blog.theayurvedaexperience.com/understanding-prakriti-vikrti-your-ayurvedic-constitution/',
   },
   {
     title: 'Ayurvedic Diet Principles for Diabetes',
     description: 'Discover the fundamental principles of Ayurvedic nutrition and how they apply to managing Prameh (diabetes).',
-    image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=80',
+    image: '/blog2.jpg',
     url: 'https://madhavbaug.org/health-corner/ayurvedic-diet-and-lifestyle-guide-for-diabetes/',
   },
 ]

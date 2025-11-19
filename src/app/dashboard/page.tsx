@@ -11,6 +11,10 @@ import { DashboardSidebar } from '@/components/DashboardSidebar'
 import { MealLogging } from '@/components/MealLogging'
 import { YogaVideos } from '@/components/YogaVideos'
 import { DoshaDistributionChart } from '@/components/dashboard/DoshaDistributionChart'
+import { LifestyleAdvice } from '@/components/dashboard/LifestyleAdvice'
+import { ActivityStreak } from '@/components/dashboard/ActivityStreak'
+import { YogaMinutes } from '@/components/dashboard/YogaMinutes'
+import { trackActivity } from '@/lib/activity-tracking'
 import type { User } from '@supabase/supabase-js'
 
 export default function DashboardPage() {
@@ -31,6 +35,9 @@ export default function DashboardPage() {
           return
         }
         setUser(user)
+        
+        // Track dashboard view
+        await trackActivity(user.id, 'dashboard_view')
         
         // Load user data
         await loadUserData(user.id)
@@ -95,20 +102,30 @@ export default function DashboardPage() {
           <DashboardWithFeedback userId={user.id}>
             <div className="space-y-6">
               {/* Welcome Banner */}
-              <div className="bg-muted rounded-xl p-6 shadow-sm">
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                  Welcome back, {userProfile?.full_name || 'User'}!!
-                </h1>
-                <p className="text-base text-muted-foreground">
-                  Monitor your health and track your progress with personalised insights
-                </p>
+              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background rounded-2xl p-6 md:p-8 shadow-sm border border-primary/20">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                      Welcome back, {userProfile?.full_name || 'User'}!
+                    </h1>
+                    <p className="text-base text-muted-foreground">
+                      Monitor your health and track your progress with personalised insights
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* Grid Layout: 2 Rows × 2 Columns */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Top Left: Prakriti Constitution */}
-                <div className="bg-card rounded-xl p-6 shadow-md border border-border">
-                  <h2 className="text-xl font-semibold mb-4 text-primary">Prakriti Constitution</h2>
+              {/* Stats Row - Activity Streak & Yoga Minutes */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ActivityStreak userId={user.id} />
+                <YogaMinutes userId={user.id} />
+              </div>
+
+              {/* Main Content Grid - Redesigned */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Prakriti Constitution - Full Width on Mobile, 2 columns on Desktop */}
+                <div className="lg:col-span-2 bg-card rounded-xl p-6 shadow-md border border-border">
+                  <h2 className="text-lg font-semibold mb-4 text-primary">Prakriti Constitution</h2>
                   {onboarding?.prakriti_totals ? (
                     <>
                       {/* Progress bars */}
@@ -155,28 +172,41 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                {/* Top Right: Lifestyle */}
+                {/* Lifestyle */}
                 <div className="bg-card rounded-xl p-6 shadow-md border border-border">
-                  <h2 className="text-xl font-semibold mb-4 text-foreground">Lifestyle</h2>
+                  <h2 className="text-lg font-semibold mb-4 text-foreground">Lifestyle</h2>
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Diet:</span>
-                      <span className="text-foreground font-medium">{onboarding?.diet || 'Not specified'}</span>
+                      <span className="text-foreground font-medium">
+                        {onboarding?.lifestyle?.diet_type 
+                          ? onboarding.lifestyle.diet_type.charAt(0).toUpperCase() + onboarding.lifestyle.diet_type.slice(1)
+                          : 'Not specified'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Exercise:</span>
-                      <span className="text-foreground font-medium">{onboarding?.exercise || 'Not specified'}</span>
+                      <span className="text-foreground font-medium">
+                        {onboarding?.lifestyle?.exercise_regularly 
+                          ? onboarding.lifestyle.exercise_regularly === 'Yes' ? 'Regular' : 'Irregular'
+                          : 'Not specified'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Sleep:</span>
-                      <span className="text-foreground font-medium">{onboarding?.sleep || 'Not specified'}</span>
+                      <span className="text-foreground font-medium">
+                        {onboarding?.lifestyle?.sleep_hours 
+                          ? `${onboarding.lifestyle.sleep_hours} hours`
+                          : 'Not specified'}
+                      </span>
                     </div>
                   </div>
+                  <LifestyleAdvice lifestyle={onboarding?.lifestyle} />
                 </div>
 
-                {/* Bottom Left: Ashtvidha Pariksha */}
+                {/* Ashtvidha Pariksha */}
                 <div className="bg-card rounded-xl p-6 shadow-md border border-border">
-                  <h2 className="text-xl font-semibold mb-4 text-primary">Ashtvidha Pariksha</h2>
+                  <h2 className="text-lg font-semibold mb-4 text-primary">Ashtvidha Pariksha</h2>
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Nadi:</span>
@@ -197,10 +227,10 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Bottom Right: AI System */}
-                <div className="bg-card rounded-xl p-6 shadow-md border border-border flex flex-col">
-                  <h2 className="text-xl font-semibold mb-4 text-foreground">AI System</h2>
-                  <div className="flex-1 flex items-center justify-center">
+                {/* AI System */}
+                <div className="lg:col-span-2 bg-card rounded-xl p-6 shadow-md border border-border">
+                  <h2 className="text-lg font-semibold mb-4 text-foreground">AI Recommendations</h2>
+                  <div className="flex items-center justify-center">
                     <DashboardAIWidget userId={user.id} context={onboarding} />
                   </div>
                 </div>

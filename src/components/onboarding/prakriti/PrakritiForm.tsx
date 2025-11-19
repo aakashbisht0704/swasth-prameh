@@ -104,29 +104,35 @@ export function PrakritiForm({ onNext, onBack, initialData }: PrakritiFormProps)
   }
 
   const calculatePrakriti = () => {
-    // Calculate totals
+    // Calculate totals - only count defined values (0 is valid)
     const totals: PrakritiTotals = {
-      vata_total: Object.values(scores.vata).reduce((sum, score) => sum + score, 0),
-      pitta_total: Object.values(scores.pitta).reduce((sum, score) => sum + score, 0),
-      kapha_total: Object.values(scores.kapha).reduce((sum, score) => sum + score, 0)
+      vata_total: Object.values(scores.vata)
+        .filter(score => score !== undefined && score !== null)
+        .reduce((sum, score) => sum + (score || 0), 0),
+      pitta_total: Object.values(scores.pitta)
+        .filter(score => score !== undefined && score !== null)
+        .reduce((sum, score) => sum + (score || 0), 0),
+      kapha_total: Object.values(scores.kapha)
+        .filter(score => score !== undefined && score !== null)
+        .reduce((sum, score) => sum + (score || 0), 0)
     }
 
     // Determine dominant prakriti with mixed dosha support
     const { vata_total, pitta_total, kapha_total } = totals
-    const scores = [
+    const doshaScores = [
       { dosha: 'Vata', score: vata_total },
       { dosha: 'Pitta', score: pitta_total },
       { dosha: 'Kapha', score: kapha_total }
     ]
     
     // Sort by score descending
-    const sortedScores = [...scores].sort((a, b) => b.score - a.score)
+    const sortedScores = [...doshaScores].sort((a, b) => b.score - a.score)
     const maxScore = sortedScores[0].score
     const secondScore = sortedScores[1].score
     const minScore = sortedScores[2].score
 
-    // Check if doshas are close (within 10 points)
-    const scoreThreshold = 10
+    // Check if doshas are close (within 10 points or 15% of max score)
+    const scoreThreshold = Math.max(10, maxScore * 0.15)
     const isClose = (score1: number, score2: number) => Math.abs(score1 - score2) <= scoreThreshold
 
     let dominant: string
@@ -182,13 +188,23 @@ export function PrakritiForm({ onNext, onBack, initialData }: PrakritiFormProps)
   }
 
   const isComplete = () => {
-    const vataComplete = prakritiQuestions.vata.every(q => scores.vata[q.id] > 0)
-    const pittaComplete = prakritiQuestions.pitta.every(q => scores.pitta[q.id] > 0)
-    const kaphaComplete = prakritiQuestions.kapha.every(q => scores.kapha[q.id] > 0)
+    // Check if all questions have been answered (value is defined, 0 is valid)
+    const vataComplete = prakritiQuestions.vata.every(q => {
+      const value = scores.vata[q.id]
+      return value !== undefined && value !== null
+    })
+    const pittaComplete = prakritiQuestions.pitta.every(q => {
+      const value = scores.pitta[q.id]
+      return value !== undefined && value !== null
+    })
+    const kaphaComplete = prakritiQuestions.kapha.every(q => {
+      const value = scores.kapha[q.id]
+      return value !== undefined && value !== null
+    })
     return vataComplete && pittaComplete && kaphaComplete
   }
 
-  const totalAnswered = Object.values(scores).flatMap(Object.values).filter(score => score > 0).length
+  const totalAnswered = Object.values(scores).flatMap(Object.values).filter(score => score !== undefined && score !== null).length
   const totalQuestions = Object.values(prakritiQuestions).flatMap(q => q).length
 
   return (

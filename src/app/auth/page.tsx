@@ -2,9 +2,9 @@
 
 import { AuthForm } from '@/components/auth-form'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 
-export default function AuthPage() {
+function AuthPageContent() {
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
 
@@ -26,5 +26,23 @@ export default function AuthPage() {
         <AuthForm />
       </div>
     </div>
+  )
+}
+
+function AuthPageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background p-4">
+      <div className="w-full max-w-md">
+        <AuthForm />
+      </div>
+    </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<AuthPageFallback />}>
+      <AuthPageContent />
+    </Suspense>
   )
 }
