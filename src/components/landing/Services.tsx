@@ -53,7 +53,7 @@ export function Services() {
             <Card className="h-full border-border/50 hover:shadow-xl transition-shadow overflow-hidden">
               <div className="relative h-64 w-full">
                 <Image
-                  src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=80"
+                  src="/dietplan.jpg"
                   alt="Personalized diet and lifestyle plan"
                   fill
                   className="object-cover"
@@ -100,12 +100,17 @@ export function Services() {
             <Card className="h-full border-border/50 hover:shadow-xl transition-shadow overflow-hidden">
               <div className="relative h-64 w-full">
                 <Image
-                  src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?auto=format&fit=crop&w=800&q=80"
+                  src="/consult.jpg"
                   alt="Ayurvedic consultation"
                   fill
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                <div className="absolute top-4 right-4">
+                  <span className="inline-flex items-center rounded-full bg-primary/90 px-3 py-1 text-sm font-semibold text-primary-foreground backdrop-blur-sm">
+                    Coming Soon
+                  </span>
+                </div>
               </div>
               <CardHeader>
                 <CardTitle className="text-2xl">Consultation Services</CardTitle>

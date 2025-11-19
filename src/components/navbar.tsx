@@ -4,20 +4,23 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X, Moon, Sun } from 'lucide-react'
+import { Menu, X, Moon, Sun, ChevronDown } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'motion/react'
 import { Button } from './ui/button'
 import { supabase } from '@/lib/supabase'
 
 const navLinks = [
+  { label: 'Home', href: '#hero' },
   { label: 'About Us', href: '#about' },
-  { label: 'Our Approach', href: '#approach' },
-  { label: 'Services', href: '#services' },
+  { label: 'Our Team', href: '#team' },
   { label: 'Testimonials', href: '#testimonials' },
+]
+
+const moreDropdownLinks = [
+  { label: 'Services', href: '#services' },
   { label: 'Blog/Resources', href: '#resources' },
   { label: 'Contact Us', href: '#contact' },
-  { label: 'Patient Portal', href: '/dashboard', isCTA: true },
 ]
 
 function ThemeToggle() {
@@ -99,59 +102,94 @@ export function Navbar() {
 
   if (isAuthPage) return null
 
+  const [isMoreHovered, setIsMoreHovered] = useState(false)
+
   return (
     <header className={`sticky top-0 z-50 w-full border-b transition-all duration-300 ${
       isScrolled 
         ? 'border-border/60 bg-background/95 backdrop-blur-md shadow-sm' 
         : 'border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60'
     }`}>
-      <div className="container flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3">
-          <span className="relative h-10 w-10 overflow-hidden rounded-full bg-primary/10">
-            <Image
-              src="/logo.png"
-              alt="SwasthPrameh logo"
-              fill
-              sizes="40px"
-              className="object-contain"
-              priority
-            />
-          </span>
-          <span className="text-lg font-semibold tracking-tight text-foreground">
-            SwasthPrameh
-          </span>
+      <div className="container flex h-24 items-center justify-between gap-4">
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="SwasthPrameh logo"
+            width={80}
+            height={80}
+            className="object-contain"
+            priority
+          />
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
-          {navLinks.map((link) => {
-            if (link.isCTA) {
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-medium text-primary hover:text-primary/80 transition"
+          {navLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={(e) => {
+                if (link.href.startsWith('#')) {
+                  e.preventDefault()
+                  const element = document.getElementById(link.href.slice(1))
+                  element?.scrollIntoView({ behavior: 'smooth' })
+                }
+              }}
+              className="text-sm font-medium text-muted-foreground transition hover:text-primary"
+            >
+              {link.label}
+            </a>
+          ))}
+          
+          {/* More Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => setIsMoreHovered(true)}
+            onMouseLeave={() => setIsMoreHovered(false)}
+          >
+            <button className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-primary">
+              More
+              <ChevronDown className={`h-4 w-4 transition-transform ${isMoreHovered ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {isMoreHovered && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full left-0 mt-2 w-48 rounded-lg border border-border/60 bg-background/95 backdrop-blur-md shadow-lg py-2"
                 >
-                  {link.label}
-                </Link>
-              )
-            }
-            return (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={(e) => {
-                  if (link.href.startsWith('#')) {
-                    e.preventDefault()
-                    const element = document.getElementById(link.href.slice(1))
-                    element?.scrollIntoView({ behavior: 'smooth' })
-                  }
-                }}
-                className="text-sm font-medium text-muted-foreground transition hover:text-primary"
-              >
-                {link.label}
-              </a>
-            )
-          })}
+                  {moreDropdownLinks.map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={(e) => {
+                        if (link.href.startsWith('#')) {
+                          e.preventDefault()
+                          const element = document.getElementById(link.href.slice(1))
+                          element?.scrollIntoView({ behavior: 'smooth' })
+                        }
+                        setIsMoreHovered(false)
+                      }}
+                      className="block px-4 py-2 text-sm text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* SGT Ayurveda Hospital Link */}
+          <a
+            href="https://sgtuniversity.ac.in/ims/hospital"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-muted-foreground transition hover:text-primary"
+          >
+            SGT Ayurveda Hospital
+          </a>
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
@@ -201,37 +239,58 @@ export function Navbar() {
             className="border-t border-border/60 bg-background/95 px-4 pb-6 pt-4 shadow-lg lg:hidden"
           >
             <div className="flex flex-col gap-3">
-              {navLinks.map((link) => {
-                if (link.isCTA) {
-                  return (
-                    <Link
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={(e) => {
+                    if (link.href.startsWith('#')) {
+                      e.preventDefault()
+                      const element = document.getElementById(link.href.slice(1))
+                      element?.scrollIntoView({ behavior: 'smooth' })
+                    }
+                    setIsMenuOpen(false)
+                  }}
+                  className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                >
+                  {link.label}
+                </a>
+              ))}
+              
+              {/* More Dropdown in Mobile */}
+              <div className="px-3 py-2">
+                <div className="text-sm font-medium text-muted-foreground mb-2">More</div>
+                <div className="flex flex-col gap-1 pl-4">
+                  {moreDropdownLinks.map((link) => (
+                    <a
                       key={link.href}
                       href={link.href}
-                      className="rounded-xl px-3 py-2 text-sm font-medium text-primary transition hover:bg-primary/10"
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={(e) => {
+                        if (link.href.startsWith('#')) {
+                          e.preventDefault()
+                          const element = document.getElementById(link.href.slice(1))
+                          element?.scrollIntoView({ behavior: 'smooth' })
+                        }
+                        setIsMenuOpen(false)
+                      }}
+                      className="rounded-xl px-3 py-2 text-sm text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
                     >
                       {link.label}
-                    </Link>
-                  )
-                }
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    onClick={(e) => {
-                      if (link.href.startsWith('#')) {
-                        e.preventDefault()
-                        const element = document.getElementById(link.href.slice(1))
-                        element?.scrollIntoView({ behavior: 'smooth' })
-                      }
-                      setIsMenuOpen(false)
-                    }}
-                    className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                  >
-                    {link.label}
-                  </a>
-                )
-              })}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* SGT Ayurveda Hospital Link in Mobile */}
+              <a
+                href="https://sgtuniversity.ac.in/ims/hospital"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+              >
+                SGT Ayurveda Hospital
+              </a>
               <div className="mt-2 flex flex-col gap-2">
                 {isAuthed ? (
                   <Button

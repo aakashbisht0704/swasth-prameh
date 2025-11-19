@@ -1,30 +1,30 @@
 'use client'
 
 import { motion } from 'motion/react'
-import { Sparkles, Heart, Brain, Users, AlertCircle, TrendingUp, Users2 } from 'lucide-react'
+import { Sparkles, Activity, Utensils, BarChart, AlertCircle, TrendingUp, Users2 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { intro } from '@/content/intro'
 
 const usps = [
   {
     icon: Sparkles,
-    title: 'Personalized Prakriti Analysis',
-    description: 'Discover your unique Ayurvedic constitution through comprehensive assessment and get plans tailored to your dosha.',
+    title: 'Prakriti Analysis',
+    description: 'Understand your body type',
   },
   {
-    icon: Brain,
-    title: 'AI-Assisted Personalization',
-    description: 'Advanced AI technology analyzes your health data to create truly personalized recommendations.',
+    icon: Activity,
+    title: 'Smart Data Integration',
+    description: 'Sync vitals',
   },
   {
-    icon: Users,
-    title: 'Doctor-Reviewed Plans',
-    description: 'All plans are reviewed and approved by certified Ayurvedic practitioners before delivery.',
+    icon: Utensils,
+    title: 'Lifestyle & Diet Guidance',
+    description: 'Personalized Ayurvedic recommendations.',
   },
   {
-    icon: Heart,
-    title: '15-Day Plans + Tracking',
-    description: 'Receive customized 15-day plans with continuous monitoring and updates based on your progress.',
+    icon: BarChart,
+    title: 'Progress Dashboard',
+    description: 'Track your wellness journey visually',
   },
 ]
 
@@ -66,35 +66,6 @@ export function Intro() {
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-base">{point.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Prakriti Explanation */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mb-16"
-        >
-          <h3 className="text-2xl font-bold text-center text-foreground mb-4">
-            {intro.prakriti.title}
-          </h3>
-          <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-            {intro.prakriti.description}
-          </p>
-          <div className="grid gap-6 md:grid-cols-3">
-            {intro.prakriti.doshas.map((dosha, index) => (
-              <Card key={index} className="border-primary/20 bg-primary/5">
-                <CardHeader>
-                  <CardTitle className="text-xl text-primary">{dosha.name}</CardTitle>
-                  <CardDescription className="text-sm font-medium">{dosha.elements}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{dosha.characteristics}</p>
                 </CardContent>
               </Card>
             ))}

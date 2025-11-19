@@ -1,11 +1,9 @@
 'use client'
 
 import { Hero } from '@/components/landing/Hero'
-import { Intro } from '@/components/landing/Intro'
 import { About } from '@/components/landing/About'
-import { Approach } from '@/components/landing/Approach'
+import { Team } from '@/components/landing/Team'
 import { Services } from '@/components/landing/Services'
-import { PlanPreview } from '@/components/landing/PlanPreview'
 import { Testimonials } from '@/components/landing/Testimonials'
 import { Resources } from '@/components/landing/Resources'
 import { FAQ } from '@/components/landing/FAQ'
@@ -15,11 +13,9 @@ export default function HomePage() {
   return (
     <main className="bg-background text-foreground">
       <Hero />
-      <Intro />
       <About />
-      <Approach />
+      <Team />
       <Services />
-      <PlanPreview />
       <Testimonials />
       <Resources />
       <FAQ />

@@ -19,9 +19,14 @@ git pull origin main
 echo "🛑 Stopping containers..."
 docker compose down
 
-# Rebuild containers
-echo "🔨 Rebuilding containers..."
-docker compose build --no-cache web ml
+# Remove old images to force local rebuild
+echo "🗑️  Removing old images..."
+docker rmi ghcr.io/aakashbisht0704/swasth-prameh/web:latest 2>/dev/null || true
+docker rmi ghcr.io/aakashbisht0704/swasth-prameh/ml:latest 2>/dev/null || true
+
+# Rebuild containers (force local build)
+echo "🔨 Rebuilding containers locally..."
+docker compose build --no-cache --pull web ml
 
 # Start containers
 echo "🚀 Starting containers..."
