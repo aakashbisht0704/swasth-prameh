@@ -91,30 +91,51 @@ export function useChatSessions() {
   // Add message to chat
   const addMessage = useCallback(
     (chatId: string, message: ChatMessage) => {
-      const updated = sessions.map((s) => {
-        if (s.id === chatId) {
-          const newMessages = [...s.messages, message]
-          // Auto-generate title from first user message if still "New Chat"
-          let newTitle = s.title
-          if (s.title === 'New Chat' && message.role === 'user') {
-            newTitle = message.content.length > 50 
-              ? message.content.slice(0, 50) + '...' 
-              : message.content
-          }
-          return {
-            ...s,
-            messages: newMessages,
-            title: newTitle,
+      setSessions((prevSessions) => {
+        const sessionExists = prevSessions.some((s) => s.id === chatId)
+        if (!sessionExists) {
+          console.warn(`Chat ${chatId} not found, creating it`)
+          // If chat doesn't exist, create it
+          const newChat: ChatSession = {
+            id: chatId,
+            title: message.role === 'user' 
+              ? (message.content.length > 50 ? message.content.slice(0, 50) + '...' : message.content)
+              : 'New Chat',
+            messages: [message],
+            createdAt: Date.now(),
             updatedAt: Date.now(),
           }
+          const updated = [newChat, ...prevSessions]
+          saveSessions(updated)
+          return updated
         }
-        return s
-      })
-      // Sort by updatedAt (newest first)
-      updated.sort((a, b) => b.updatedAt - a.updatedAt)
-      saveSessions(updated)
 
-      // Save to Supabase if user is authenticated
+        const updated = prevSessions.map((s) => {
+          if (s.id === chatId) {
+            const newMessages = [...s.messages, message]
+            // Auto-generate title from first user message if still "New Chat"
+            let newTitle = s.title
+            if (s.title === 'New Chat' && message.role === 'user') {
+              newTitle = message.content.length > 50 
+                ? message.content.slice(0, 50) + '...' 
+                : message.content
+            }
+            return {
+              ...s,
+              messages: newMessages,
+              title: newTitle,
+              updatedAt: Date.now(),
+            }
+          }
+          return s
+        })
+        // Sort by updatedAt (newest first)
+        updated.sort((a, b) => b.updatedAt - a.updatedAt)
+        saveSessions(updated)
+        return updated
+      })
+
+      // Save to Supabase if user is authenticated (non-blocking)
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) {
           supabase
@@ -131,7 +152,7 @@ export function useChatSessions() {
         }
       })
     },
-    [sessions, saveSessions]
+    [saveSessions]
   )
 
   // Get chat by ID

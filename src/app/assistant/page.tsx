@@ -67,6 +67,17 @@ export default function AssistantPage() {
     }
   }, [sessions, currentChatId])
 
+  // Update currentChat when sessions change
+  useEffect(() => { 
+    if (currentChatId) {
+      const chat = getChat(currentChatId)
+      if (!chat) {
+        // Chat was deleted, clear selection
+        setCurrentChatId(null)
+      }
+    }
+  }, [sessions, currentChatId, getChat])
+
   async function runPipeline(sessionId: string, seed: any) {
     try {
       const dRes = await fetch('/api/diagnosis/predict', {
@@ -131,30 +142,54 @@ export default function AssistantPage() {
   }
 
   const handleSendMessage = async () => {
-    if (!input.trim() || !currentChatId) return
+    if (!input.trim()) return
+    
+    // Create chat if none exists
+    let chatId = currentChatId
+    if (!chatId) {
+      chatId = createChat()
+      setCurrentChatId(chatId)
+    }
     
     const messageText = input.trim()
     setInput('')
     
+    // Get current messages before adding the new one
+    const currentMessages = currentChat?.messages || []
+    const messagesWithNew = [...currentMessages, { role: 'user' as const, content: messageText }]
+    
     // Add user message
-    addMessage(currentChatId, { role: 'user', content: messageText })
+    addMessage(chatId, { role: 'user', content: messageText })
 
     // Send to API and get response
-    await sendMessage(
-      [
-        ...(currentChat?.messages || []),
-        { role: 'user' as const, content: messageText },
-      ],
-      (content) => {
-        addMessage(currentChatId, { role: 'assistant', content })
-      },
-      (error) => {
-        addMessage(currentChatId, {
-          role: 'assistant',
-          content: `Sorry, I encountered an error: ${error.message}`,
-        })
-      }
-    )
+    try {
+      await sendMessage(
+        messagesWithNew,
+        (content) => {
+          if (content && content.trim()) {
+            addMessage(chatId, { role: 'assistant', content })
+          } else {
+            addMessage(chatId, {
+              role: 'assistant',
+              content: 'Sorry, I received an empty response. Please try again.',
+            })
+          }
+        },
+        (error) => {
+          console.error('Chat error:', error)
+          addMessage(chatId, {
+            role: 'assistant',
+            content: `Sorry, I encountered an error: ${error.message || 'Unknown error'}`,
+          })
+        }
+      )
+    } catch (error) {
+      console.error('Error sending message:', error)
+      addMessage(chatId, {
+        role: 'assistant',
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      })
+    }
   }
 
   const handlePromptClick = (prompt: string) => {
