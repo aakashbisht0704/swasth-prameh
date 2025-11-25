@@ -30,17 +30,14 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const pageSize = parseInt(searchParams.get('page_size') || '20')
 
+    // Fetch chats with manual user profile joins (more reliable)
     let query = supabase
       .from('support_chats')
-      .select(`
-        *,
-        user:user_profiles!support_chats_user_id_fkey(*),
-        assigned_agent:user_profiles!support_chats_assigned_to_fkey(*)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .eq('user_id', user.id)
       .order('last_message_at', { ascending: false, nullsFirst: false })
       .range((page - 1) * pageSize, page * pageSize - 1)
-
+    
     if (status) {
       query = query.eq('status', status)
     }
@@ -52,8 +49,35 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Manually fetch user profiles for each chat
+    const chatsWithUsers = await Promise.all(
+      (chats || []).map(async (chat: any) => {
+        const [userResult, agentResult] = await Promise.all([
+          supabase
+            .from('user_profiles')
+            .select('id, full_name, email, role, avatar_url')
+            .eq('id', chat.user_id)
+            .single()
+            .catch(() => ({ data: null })),
+          chat.assigned_to 
+            ? supabase
+                .from('user_profiles')
+                .select('id, full_name, email, role, avatar_url')
+                .eq('id', chat.assigned_to)
+                .single()
+                .catch(() => ({ data: null }))
+            : Promise.resolve({ data: null })
+        ])
+        return {
+          ...chat,
+          user: userResult.data,
+          assigned_agent: agentResult.data
+        }
+      })
+    )
+
     return NextResponse.json({
-      data: chats || [],
+      data: chatsWithUsers,
       count: count || 0,
       page,
       page_size: pageSize,
@@ -64,4 +88,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
-

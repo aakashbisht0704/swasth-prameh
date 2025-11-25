@@ -56,8 +56,8 @@ export async function ensureUserExists(user: User): Promise<void> {
           id: user.id,
           full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '', 
           email: user.email || null,
-          gender: '', 
-          dob: null,
+          gender: user.user_metadata?.gender || '', 
+          dob: user.user_metadata?.dob ? new Date(user.user_metadata.dob).toISOString().split('T')[0] : null,
           role: 'user' // Default role
         })
         
@@ -70,6 +70,7 @@ export async function ensureUserExists(user: User): Promise<void> {
             id: user.id,
             full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
             email: user.email || null,
+            gender: user.user_metadata?.gender || '',
             role: 'user',
           }, { onConflict: 'id' })
         

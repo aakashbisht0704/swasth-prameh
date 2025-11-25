@@ -2,7 +2,10 @@
 -- The issue is that policies checking for support/admin role query user_profiles again, causing recursion
 -- Solution: Use security definer functions or check auth.jwt() directly
 
--- First, ensure email column exists
+-- NOTE: If you have schema issues (user_id column, missing email, etc.), 
+-- run sql/fix-user-profiles-schema-complete.sql FIRST, then this script.
+
+-- Ensure email column exists (quick fix if schema is already correct)
 DO $$ 
 BEGIN
   IF NOT EXISTS (
@@ -13,9 +16,11 @@ BEGIN
     
     -- Populate email from auth.users for existing records
     UPDATE user_profiles up
-    SET email = au.email
-    FROM auth.users au
-    WHERE up.id = au.id AND up.email IS NULL;
+    SET email = COALESCE(
+      (SELECT email FROM auth.users WHERE id = up.id),
+      up.email
+    )
+    WHERE up.email IS NULL;
   END IF;
 END $$;
 
