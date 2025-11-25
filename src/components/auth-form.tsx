@@ -84,7 +84,9 @@ export function AuthForm() {
           // Check if email confirmation is required
           if (data.user && !data.session) {
             // Email confirmation required
-            toast.success('Please check your email to verify your account before signing in.')
+            toast.success('Account created! Please check your email to verify your account before signing in.', {
+              duration: 6000,
+            })
             // Reset form
             setEmail('')
             setPassword('')
@@ -94,24 +96,36 @@ export function AuthForm() {
             // Email confirmation not required (or already confirmed)
             toast.success('Account created successfully!')
             await handlePostAuthRedirect()
+          } else {
+            // Unexpected case - no user and no session
+            throw new Error('Account creation failed. Please try again.')
           }
       } else {
         // Sign in
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) {
           // Handle specific error cases
-          if (error.message.includes('Invalid login credentials')) {
+          if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid')) {
             throw new Error('Invalid email or password. Please check your credentials and try again.')
-          } else if (error.message.includes('Email not confirmed')) {
-            throw new Error('Please verify your email address before signing in. Check your inbox for the confirmation link.')
+          } else if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
+            throw new Error('Please verify your email address before signing in. Check your inbox for the confirmation link. If you didn\'t receive it, you can request a new one by signing up again.')
+          } else if (error.message.includes('rate limit')) {
+            throw new Error('Too many sign-in attempts. Please wait a few minutes and try again.')
           }
           throw error
         }
-        toast.success('Signed in successfully!')
-        await handlePostAuthRedirect()
+        
+        // Check if we have a session
+        if (data.session) {
+          toast.success('Signed in successfully!')
+          await handlePostAuthRedirect()
+        } else {
+          // No session - might need email confirmation
+          throw new Error('Please verify your email address before signing in. Check your inbox for the confirmation link.')
+        }
       }
     } catch (error: any) {
       console.error('Authentication error:', error)
@@ -238,7 +252,25 @@ export function AuthForm() {
             </div>
           )}
           {!isSignUp && (
-            <div className="text-right">
+            <div className="flex justify-between items-center">
+              <Button
+                type="button"
+                variant="link"
+                className="text-xs h-auto p-0"
+                onClick={() => {
+                  if (!email) {
+                    toast.error('Please enter your email address first')
+                    return
+                  }
+                  toast('If you haven\'t received a confirmation email, please sign up again with the same email to receive a new confirmation link.', {
+                    duration: 5000,
+                    icon: 'ℹ️',
+                  })
+                  setIsSignUp(true)
+                }}
+              >
+                Didn't receive confirmation email?
+              </Button>
               <Button
                 type="button"
                 variant="link"
