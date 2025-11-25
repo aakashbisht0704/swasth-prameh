@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PrakritiQuestion } from './PrakritiQuestion'
 import { PrakritiSummaryCard } from './PrakritiSummaryCard'
+import { InvestigationWizard } from '../InvestigationWizard'
 import { toast } from 'react-hot-toast'
 import { Progress } from '@/components/ui/progress'
 
@@ -104,6 +105,10 @@ const createSteps = () => {
 }
 
 export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiMultiStepFormProps) {
+  // Track if investigation is complete
+  const [investigationComplete, setInvestigationComplete] = useState(false)
+  const [investigationData, setInvestigationData] = useState<any>(initialData?.investigation || {})
+  
   const [scores, setScores] = useState<PrakritiScores>({
     vata: {},
     pitta: {},
@@ -117,6 +122,14 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
     totals: PrakritiTotals
     summary: PrakritiSummary
   } | null>(null)
+
+  // Check if investigation was already completed
+  useEffect(() => {
+    if (initialData?.investigation) {
+      setInvestigationComplete(true)
+      setInvestigationData(initialData.investigation)
+    }
+  }, [initialData])
 
   useEffect(() => {
     if (initialData?.prakriti_scores) {
@@ -278,13 +291,21 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
     setShowSummary(true)
   }
 
+  const handleInvestigationComplete = (data: any) => {
+    setInvestigationData(data.investigation || data)
+    setInvestigationComplete(true)
+    toast.success('Investigation details saved!')
+  }
+
   const handleNext = () => {
     if (!calculatedResults) {
       toast.error('Please calculate your Prakriti first')
       return
     }
 
+    // Combine investigation and prakriti data
     const prakritiData = {
+      investigation: investigationData,
       prakriti_scores: scores,
       prakriti_totals: calculatedResults.totals,
       prakriti_summary: calculatedResults.summary
@@ -311,6 +332,28 @@ export function PrakritiMultiStepForm({ onNext, onBack, initialData }: PrakritiM
   const answeredQuestions = Object.values(scores).flatMap(Object.values).filter(score => score !== undefined && score !== null).length
   const progressPercentage = (answeredQuestions / totalQuestions) * 100
 
+  // Show Investigation first if not complete
+  if (!investigationComplete) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Prakriti Assessment - Investigation Details</CardTitle>
+            <div className="text-sm text-muted-foreground">
+              Please complete your investigation details before proceeding with the Prakriti assessment.
+            </div>
+          </CardHeader>
+        </Card>
+        <InvestigationWizard
+          onNext={handleInvestigationComplete}
+          onBack={onBack}
+          initialData={{ investigation: investigationData }}
+        />
+      </div>
+    )
+  }
+
+  // Show Prakriti questions after investigation is complete
   return (
     <div className="space-y-6">
       <Card>

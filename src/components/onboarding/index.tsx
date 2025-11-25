@@ -9,8 +9,7 @@ import { LifestyleStep } from './LifestyleStep';
 
 export const onboardingSteps = [
   { label: 'Profile', Component: ProfileDetailsStep },
-  { label: 'Prakriti', Component: PrakritiMultiStepForm },
-  { label: 'Investigation', Component: InvestigationWizard },
+  { label: 'Prakriti', Component: PrakritiMultiStepForm }, // Investigation is now part of Prakriti step
   { label: 'Medical History', Component: MedicalHistoryStep },
   { label: 'Reports', Component: ReportUploadStep },
   { label: 'Pariksha', Component: ParikshaStep },
