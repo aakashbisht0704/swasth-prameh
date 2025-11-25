@@ -37,7 +37,7 @@ export async function ensureUserExists(user: User): Promise<void> {
     const { data: profile, error: profileFetchError } = await supabase
       .from('user_profiles')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .maybeSingle()
       
     if (profileFetchError) {
@@ -53,15 +53,44 @@ export async function ensureUserExists(user: User): Promise<void> {
       const { error: insertError } = await supabase
         .from('user_profiles')
         .insert({ 
-          user_id: user.id, 
+          id: user.id,
           full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '', 
+          email: user.email || null,
           gender: '', 
-          dob: null 
+          dob: null,
+          role: 'user' // Default role
         })
         
       if (insertError) {
         console.error('Error inserting user_profiles:', insertError.message)
-        throw insertError
+        // Try upsert instead in case of conflict
+        const { error: upsertError } = await supabase
+          .from('user_profiles')
+          .upsert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+            email: user.email || null,
+            role: 'user',
+          }, { onConflict: 'id' })
+        
+        if (upsertError) {
+          throw upsertError
+        }
+      }
+    } else {
+      // Ensure email and role are set if missing
+      const updates: any = {}
+      if (!profile.email && user.email) {
+        updates.email = user.email
+      }
+      if (!profile.role) {
+        updates.role = 'user'
+      }
+      if (Object.keys(updates).length > 0) {
+        await supabase
+          .from('user_profiles')
+          .update(updates)
+          .eq('id', user.id)
       }
     }
   } catch (error) {
