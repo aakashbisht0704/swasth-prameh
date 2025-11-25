@@ -35,7 +35,8 @@ export async function POST(req: Request) {
       dominant_dosha: onboarding.dominant_dosha,
       lifestyle: onboarding.lifestyle,
       medical_history: onboarding.medical_history,
-      allergies: onboarding.allergies
+      allergies: onboarding.allergies,
+      investigation: onboarding.investigation || null, // Include investigation data
     }
     
     console.log('Context:', context)

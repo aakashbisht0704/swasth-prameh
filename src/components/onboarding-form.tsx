@@ -40,15 +40,28 @@ export function OnboardingForm() {
   const handleComplete = async (allData: any) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    
+    // Extract investigation data if present
+    const { full_name, gender, dob, investigation, ...rest } = allData;
+    
     // Save profile details (first step)
-    const { full_name, gender, dob, ...rest } = allData;
     await supabase
       .from('user_profiles')
       .upsert({ user_id: user.id, full_name, gender, dob });
-    // Upsert onboarding data - ensure gender is included
+    
+    // Prepare onboarding data
+    const onboardingData: any = { ...rest, gender, user_id: user.id };
+    
+    // If investigation data exists, include it
+    if (investigation) {
+      onboardingData.investigation = investigation;
+    }
+    
+    // Upsert onboarding data
     const { error } = await supabase
       .from('onboarding')
-      .upsert({ ...rest, gender, user_id: user.id }, { onConflict: 'user_id' });
+      .upsert(onboardingData, { onConflict: 'user_id' });
+    
     if (!error) {
       router.push('/dashboard');
     } else {

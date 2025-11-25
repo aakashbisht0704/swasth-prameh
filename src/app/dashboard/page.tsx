@@ -181,6 +181,8 @@ export default function DashboardPage() {
                       <span className="text-foreground font-medium">
                         {onboarding?.lifestyle?.diet_type 
                           ? onboarding.lifestyle.diet_type.charAt(0).toUpperCase() + onboarding.lifestyle.diet_type.slice(1)
+                          : onboarding?.investigation?.dietary_habits?.meals_per_day
+                          ? `${onboarding.investigation.dietary_habits.meals_per_day} meals/day`
                           : 'Not specified'}
                       </span>
                     </div>
@@ -200,8 +202,27 @@ export default function DashboardPage() {
                           : 'Not specified'}
                       </span>
                     </div>
+                    {onboarding?.investigation?.dietary_habits?.water_intake && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Water Intake:</span>
+                        <span className="text-foreground font-medium">
+                          {onboarding.investigation.dietary_habits.water_intake}
+                        </span>
+                      </div>
+                    )}
+                    {onboarding?.investigation?.dietary_habits?.cooking_oil && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Cooking Oil:</span>
+                        <span className="text-foreground font-medium">
+                          {onboarding.investigation.dietary_habits.cooking_oil}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <LifestyleAdvice lifestyle={onboarding?.lifestyle} />
+                  <LifestyleAdvice 
+                    lifestyle={onboarding?.lifestyle} 
+                    investigation={onboarding?.investigation}
+                  />
                 </div>
 
                 {/* Ashtvidha Pariksha */}

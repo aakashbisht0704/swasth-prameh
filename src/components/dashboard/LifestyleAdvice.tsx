@@ -5,9 +5,10 @@ import { Loader2 } from 'lucide-react'
 
 interface LifestyleAdviceProps {
   lifestyle: any
+  investigation?: any
 }
 
-export function LifestyleAdvice({ lifestyle }: LifestyleAdviceProps) {
+export function LifestyleAdvice({ lifestyle, investigation }: LifestyleAdviceProps) {
   const [advice, setAdvice] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,7 +29,7 @@ export function LifestyleAdvice({ lifestyle }: LifestyleAdviceProps) {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ lifestyle }),
+          body: JSON.stringify({ lifestyle, investigation }),
         })
 
         const data = await response.json()
