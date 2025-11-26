@@ -52,11 +52,11 @@ export default function DashboardPage() {
 
   const loadUserData = async (userId: string) => {
     try {
-      // Load user profile
+      // Load user profile (user_profiles.id = auth.users.id)
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single()
       setUserProfile(profile)
 

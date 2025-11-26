@@ -46,10 +46,21 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Error fetching chats:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
       console.error('Error details:', JSON.stringify(error, null, 2))
+      
+      // Check if table doesn't exist
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        return NextResponse.json({ 
+          error: 'Support chats table not found. Please run the database migration.',
+          code: error.code
+        }, { status: 500 })
+      }
+      
       return NextResponse.json({ 
         error: error.message || 'Failed to fetch chats',
-        details: error 
+        code: error.code
       }, { status: 500 })
     }
 

@@ -43,7 +43,22 @@ export async function POST(
       .eq('id', chatId)
       .single()
 
-    if (chatError || !chat) {
+    if (chatError) {
+      console.error('Error fetching chat:', chatError)
+      console.error('Error code:', chatError.code)
+      if (chatError.code === '42P01' || chatError.message?.includes('does not exist')) {
+        return NextResponse.json({ 
+          error: 'Support chats table not found. Please run the database migration.',
+          code: chatError.code
+        }, { status: 500 })
+      }
+      return NextResponse.json({ 
+        error: chatError.message || 'Chat not found',
+        code: chatError.code
+      }, { status: chatError.code === 'PGRST116' ? 404 : 500 })
+    }
+
+    if (!chat) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 })
     }
 
@@ -129,13 +144,18 @@ export async function POST(
         .eq('id', chatId)
     }
 
-    // Log activity
-    await supabase.rpc('log_support_activity', {
-      p_user_id: user.id,
-      p_action: 'send_message',
-      p_entity_type: 'support_message',
-      p_entity_id: newMessage.id,
-    })
+    // Log activity (optional - don't fail if RPC doesn't exist)
+    try {
+      await supabase.rpc('log_support_activity', {
+        p_user_id: user.id,
+        p_action: 'send_message',
+        p_entity_type: 'support_message',
+        p_entity_id: newMessage.id,
+      })
+    } catch (rpcError: any) {
+      console.warn('Failed to log activity (RPC may not exist):', rpcError.message)
+      // Don't fail the request if activity logging fails
+    }
 
     return NextResponse.json({ message: messageWithDetails })
   } catch (error: any) {

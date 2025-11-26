@@ -24,22 +24,22 @@ const ayurvedicDoctors = [
 const ayurvedicStudents = [
   {
     name: 'Vaibhav Sharma',
-    role: 'Student at SGT University in FIMS',
+    role: 'BAMS Scholar at SGT University',
     image: '/Vaibhav.jpg',
   },
   {
     name: 'Jiwansh Bhayana',
-    role: 'Student at SGT University in FIMS',
+    role: 'BAMS Scholar at SGT University',
     image: '/Jiwansh.jpg',
   },
   {
     name: 'Shreya Jain',
-    role: 'Student at SGT University in FIMS',
+    role: 'BAMS Scholar at SGT University',
     image: '/Shreya.jpg',
   },
   {
     name: 'Tushar Singhal',
-    role: 'Student at SGT University in FIMS',
+    role: 'BAMS Scholar at SGT University',
     image: '/Tushar.jpg',
   },
 ]
@@ -47,12 +47,12 @@ const ayurvedicStudents = [
 const techTeam = [
   {
     name: 'Aakash Bisht',
-    role: 'Student at SGT University in SOET',
+    role: 'SOET Scholar at SGT University',
     image: '/Aakash.jpg',
   },
   {
     name: 'Ayush Parashar',
-    role: 'Student at SGT University in SOET',
+    role: 'SOET Scholar at SGT University',
     image: '/Ayush.jpg',
   },
 ]

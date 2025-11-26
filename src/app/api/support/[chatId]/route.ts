@@ -40,7 +40,22 @@ export async function GET(
       .eq('id', chatId)
       .single()
 
-    if (chatError || !chat) {
+    if (chatError) {
+      console.error('Error fetching chat:', chatError)
+      console.error('Error code:', chatError.code)
+      if (chatError.code === '42P01' || chatError.message?.includes('does not exist')) {
+        return NextResponse.json({ 
+          error: 'Support chats table not found. Please run the database migration.',
+          code: chatError.code
+        }, { status: 500 })
+      }
+      return NextResponse.json({ 
+        error: chatError.message || 'Chat not found',
+        code: chatError.code
+      }, { status: chatError.code === 'PGRST116' ? 404 : 500 })
+    }
+
+    if (!chat) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 })
     }
 
