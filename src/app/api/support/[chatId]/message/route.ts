@@ -6,7 +6,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { chatId: string } }
+  { params }: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -28,7 +28,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { chatId } = params
+    const { chatId } = await params
     const body = await req.json()
     const { message, metadata } = body
 
@@ -39,7 +39,7 @@ export async function POST(
     // Check if user has access to this chat
     const { data: chat, error: chatError } = await supabase
       .from('support_chats')
-      .select('*, user:user_profiles!support_chats_user_id_fkey(*), assigned_agent:user_profiles!support_chats_assigned_to_fkey(*)')
+      .select('*')
       .eq('id', chatId)
       .single()
 
@@ -92,16 +92,33 @@ export async function POST(
         message: message.trim(),
         metadata: metadata || {},
       })
-      .select(`
-        *,
-        sender:user_profiles!support_messages_sender_id_fkey(*),
-        attachments:support_attachments(*)
-      `)
+      .select('*')
       .single()
 
     if (messageError) {
       console.error('Error creating message:', messageError)
       return NextResponse.json({ error: messageError.message }, { status: 500 })
+    }
+
+    // Manually fetch sender profile and attachments
+    const [senderResult, attachmentsResult] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('id, full_name, email, role, avatar_url')
+        .eq('id', user.id)
+        .single()
+        .catch(() => ({ data: null })),
+      supabase
+        .from('support_attachments')
+        .select('*')
+        .eq('message_id', newMessage.id)
+        .catch(() => ({ data: [] }))
+    ])
+
+    const messageWithDetails = {
+      ...newMessage,
+      sender: senderResult.data,
+      attachments: attachmentsResult.data || []
     }
 
     // Update chat status if it was closed
@@ -120,7 +137,7 @@ export async function POST(
       p_entity_id: newMessage.id,
     })
 
-    return NextResponse.json({ message: newMessage })
+    return NextResponse.json({ message: messageWithDetails })
   } catch (error: any) {
     console.error('Error in create message:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })

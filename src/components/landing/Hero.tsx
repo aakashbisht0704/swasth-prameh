@@ -20,7 +20,7 @@ type HeroSlide = {
 const heroSlides: HeroSlide[] = [
   {
     id: 'slide-1',
-    title: 'Prameha',
+    title: 'Prameh',
     subtitle: 'Metabolic Disorder',
     description: 'A metabolic disorder described with dosha imbalance, mainly Kapha. Linked to improper diet, inactivity, and poor metabolism. Managed through diet, lifestyle changes, herbs, and yoga.',
     image: '/pram.jpg',
@@ -32,7 +32,7 @@ const heroSlides: HeroSlide[] = [
     title: 'Prakriti',
     subtitle: 'Your Unique Constitution',
     description: 'Prakriti is your unique body constitution formed by Vata, Pitta, and Kapha. It defines your physical, mental, and metabolic tendencies. Used in Ayurveda to give personalized health and lifestyle guidance.',
-    image: '/hero2.jpg',
+    image: '/heroNew.jpg',
     ctaText: 'Discover Your Plan',
     ctaLink: '/onboarding',
   },

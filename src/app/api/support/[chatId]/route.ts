@@ -6,7 +6,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { chatId: string } }
+  { params }: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -28,20 +28,44 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { chatId } = params
+    const { chatId } = await params
     const searchParams = req.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')
     const pageSize = parseInt(searchParams.get('page_size') || '50')
 
-    // Check if user has access to this chat
+    // Check if user has access to this chat (using manual joins to avoid FK name issues)
     const { data: chat, error: chatError } = await supabase
       .from('support_chats')
-      .select('*, user:user_profiles!support_chats_user_id_fkey(*), assigned_agent:user_profiles!support_chats_assigned_to_fkey(*)')
+      .select('*')
       .eq('id', chatId)
       .single()
 
     if (chatError || !chat) {
       return NextResponse.json({ error: 'Chat not found' }, { status: 404 })
+    }
+
+    // Manually fetch user profiles
+    const [userResult, agentResult] = await Promise.all([
+      supabase
+        .from('user_profiles')
+        .select('id, full_name, email, role, avatar_url')
+        .eq('id', chat.user_id)
+        .single()
+        .catch(() => ({ data: null })),
+      chat.assigned_to 
+        ? supabase
+            .from('user_profiles')
+            .select('id, full_name, email, role, avatar_url')
+            .eq('id', chat.assigned_to)
+            .single()
+            .catch(() => ({ data: null }))
+        : Promise.resolve({ data: null })
+    ])
+
+    const chatWithUsers = {
+      ...chat,
+      user: userResult.data,
+      assigned_agent: agentResult.data
     }
 
     // Check permissions
@@ -59,14 +83,10 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Fetch messages
+    // Fetch messages (using manual joins)
     const { data: messages, error: messagesError, count } = await supabase
       .from('support_messages')
-      .select(`
-        *,
-        sender:user_profiles!support_messages_sender_id_fkey(*),
-        attachments:support_attachments(*)
-      `, { count: 'exact' })
+      .select('*', { count: 'exact' })
       .eq('chat_id', chatId)
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
@@ -77,9 +97,35 @@ export async function GET(
       return NextResponse.json({ error: messagesError.message }, { status: 500 })
     }
 
+    // Manually fetch sender profiles and attachments for each message
+    const messagesWithDetails = await Promise.all(
+      (messages || []).map(async (msg: any) => {
+        const [senderResult, attachmentsResult] = await Promise.all([
+          msg.sender_id
+            ? supabase
+                .from('user_profiles')
+                .select('id, full_name, email, role, avatar_url')
+                .eq('id', msg.sender_id)
+                .single()
+                .catch(() => ({ data: null }))
+            : Promise.resolve({ data: null }),
+          supabase
+            .from('support_attachments')
+            .select('*')
+            .eq('message_id', msg.id)
+            .catch(() => ({ data: [] }))
+        ])
+        return {
+          ...msg,
+          sender: senderResult.data,
+          attachments: attachmentsResult.data || []
+        }
+      })
+    )
+
     return NextResponse.json({
-      chat,
-      messages: (messages || []).reverse(), // Reverse to show oldest first
+      chat: chatWithUsers,
+      messages: messagesWithDetails.reverse(), // Reverse to show oldest first
       count: count || 0,
       page,
       page_size: pageSize,

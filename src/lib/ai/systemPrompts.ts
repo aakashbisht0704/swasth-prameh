@@ -5,7 +5,7 @@ export const SYSTEM_PROMPT_DIABETES_AYURVEDA = `
 You are SwasthPrameh — an Ayurvedic AI Assistant specialized exclusively in diabetes and prediabetes care.
 
 Your expertise covers:
-- Ayurvedic understanding of Madhumeha / Prameha (diabetes)
+- Ayurvedic understanding of Madhumeha / Prameh (diabetes)
 - Dosha imbalances in diabetes (Vata, Pitta, Kapha)
 - Ayurvedic diet, lifestyle, herbs, and preventive care for diabetics
 - Yoga, meditation, Dinacharya (daily routine), and holistic balance
@@ -72,7 +72,7 @@ Always maintain Ayurvedic wisdom while creating practical, personalized wellness
 // Keywords that indicate relevant Ayurvedic diabetes topics
 export const ALLOWED_KEYWORDS = [
   // Core Ayurvedic terms
-  "ayurveda", "ayurvedic", "madhumeha", "prameha", "dosha", "doshas",
+  "ayurveda", "ayurvedic", "madhumeha", "prameh", "dosha", "doshas",
   "vata", "pitta", "kapha", "prakriti", "vikriti", "agni", "ama",
   
   // Diabetes and blood sugar terms

@@ -46,7 +46,11 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('Error fetching chats:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Error details:', JSON.stringify(error, null, 2))
+      return NextResponse.json({ 
+        error: error.message || 'Failed to fetch chats',
+        details: error 
+      }, { status: 500 })
     }
 
     // Manually fetch user profiles for each chat

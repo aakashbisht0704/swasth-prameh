@@ -6,7 +6,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { chatId: string } }
+  { params }: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -28,7 +28,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { chatId } = params
+    const { chatId } = await params
 
     // Check if user has access to this chat
     const { data: chat } = await supabase

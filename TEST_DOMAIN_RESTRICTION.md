@@ -109,7 +109,7 @@ Expected: "I'm designed to assist only with Ayurveda for Diabetes and holistic d
 
 ### Allowed Keywords Include:
 - Core Ayurvedic terms: ayurveda, dosha, vata, pitta, kapha, prakriti
-- Diabetes terms: diabetes, blood sugar, glucose, insulin, madhumeha, prameha
+- Diabetes terms: diabetes, blood sugar, glucose, insulin, madhumeha, prameh
 - Management terms: herbs, diet, yoga, meditation, lifestyle, wellness
 - Platform terms: swasth, prameh, assessment, plan, recommendation
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { ChatWidget } from '@/components/chat/ChatWidget'
 import DashboardAIWidget from '@/components/DashboardAIWidget'
 import { DashboardWithFeedback } from '@/components/DashboardWithFeedback'
 import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton'
@@ -280,7 +279,6 @@ export default function DashboardPage() {
         </main>
       </div>
       
-      {user && <ChatWidget userId={user.id} />}
     </div>
   )
 }

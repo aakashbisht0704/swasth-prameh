@@ -6,7 +6,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { messageId: string } }
+  { params }: { params: Promise<{ messageId: string }> }
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -28,12 +28,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { messageId } = params
+    const { messageId } = await params
 
     // Get message and check permissions
     const { data: message, error: messageError } = await supabase
       .from('support_messages')
-      .select('*, chat:support_chats(*)')
+      .select('*')
       .eq('id', messageId)
       .single()
 

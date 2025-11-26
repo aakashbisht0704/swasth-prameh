@@ -16,7 +16,6 @@ import {
   Download,
   Filter
 } from 'lucide-react';
-import { ChatWidget } from '@/components/chat/ChatWidget';
 import { UserDetailsModal } from './UserDetailsModal';
 
 interface User {
@@ -245,11 +244,6 @@ export function AdminDashboard({ users: initialUsers, adminId }: AdminDashboardP
                           <Eye className="w-4 h-4 mr-1" />
                           View
                         </Button>
-                        <ChatWidget 
-                          userId={user.id} 
-                          isAdmin={true} 
-                          adminId={adminId}
-                        />
                       </div>
                     </td>
                   </tr>

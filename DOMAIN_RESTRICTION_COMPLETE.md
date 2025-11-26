@@ -1,7 +1,7 @@
 # ✅ SwasthPrameh AI Domain Restriction - COMPLETED
 
 ## 🎯 **Goal Achieved**
-The AI assistant now exclusively answers questions about **Ayurveda for Diabetes and Prediabetes (Prameha / Madhumeha)** and refuses all unrelated queries.
+The AI assistant now exclusively answers questions about **Ayurveda for Diabetes and Prediabetes (Prameh / Madhumeha)** and refuses all unrelated queries.
 
 ## 🔧 **Implementation Summary**
 
@@ -24,7 +24,7 @@ The AI assistant now exclusively answers questions about **Ayurveda for Diabetes
 ### **3. Domain Coverage** ✅
 
 #### **✅ ALLOWED Topics:**
-- **Ayurvedic Diabetes:** Madhumeha, Prameha, dosha imbalances
+- **Ayurvedic Diabetes:** Madhumeha, Prameh, dosha imbalances
 - **Management:** Diet, herbs, yoga, meditation, lifestyle
 - **Constitution:** Prakriti assessment, Vata/Pitta/Kapha balance
 - **Platform:** SwasthPrameh features, assessments, plans

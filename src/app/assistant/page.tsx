@@ -38,23 +38,15 @@ export default function AssistantPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Handle seed data (from onboarding)
+  // Handle seed data (from dashboard - just create new chat, don't send automatic prompt)
   useEffect(() => {
     const raw = sessionStorage.getItem(SEED_KEY)
     if (raw) {
       sessionStorage.removeItem(SEED_KEY)
-      const seed = JSON.parse(raw)
+      // Just create a new chat - user can type their own message
       const newChatId = createChat()
       setCurrentChatId(newChatId)
-      
-      // Add initial message
-      addMessage(newChatId, {
-        role: 'user',
-        content: 'Generate my diagnosis and 15‑day plan based on my profile.',
-      })
-
-      // Run pipeline
-      runPipeline(newChatId, seed).catch(console.error)
+      // Context is available in seed if needed, but no automatic message is sent
     }
     // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
