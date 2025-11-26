@@ -3,29 +3,39 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import { trackActivity } from '@/lib/activity-tracking'
+import { AlertCircle, CheckCircle2, Calendar, Clock, UtensilsCrossed } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface PlanDay {
-  day: number
-  morning: string
-  meals: string // Legacy format: "Breakfast: ... Lunch: ... Dinner: ..."
-  evening: string
-  // New structured format (optional for backward compatibility)
-  breakfast?: string
-  lunch?: string
-  dinner?: string
+  day: string
+  breakfast: string
+  '12pm': string
+  lunch: string
+  '6pm': string
+  dinner: string
 }
 
 interface Plan {
   id: string
   user_id: string
-  summary: string | null
-  plan: PlanDay[]
-  plan_json?: any
-  markdown_table?: string
+  plan_type: 'sample' | 'ai'
+  prakriti: string
+  start_date: string
+  end_date: string
+  is_active: boolean
+  summary: string
+  payload: PlanDay[]
   created_at: string
 }
 
@@ -33,160 +43,152 @@ interface MealLoggingProps {
   userId: string
 }
 
+interface UserPrakriti {
+  prakriti: string | null
+  hasOnboarding: boolean
+}
+
 export function MealLogging({ userId }: MealLoggingProps) {
   const [plan, setPlan] = useState<Plan | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [userPrakriti, setUserPrakriti] = useState<UserPrakriti>({ prakriti: null, hasOnboarding: false })
+  const [loading, setLoading] = useState(true)
+  const [applyingPlan, setApplyingPlan] = useState(false)
+  const [generatingPlan, setGeneratingPlan] = useState(false)
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [allergies, setAllergies] = useState<string[]>([])
   const router = useRouter()
 
   useEffect(() => {
-    loadPlan()
+    loadData()
   }, [userId])
 
-  const loadPlan = async () => {
+  const loadData = async () => {
+    setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('plans')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()  // Use maybeSingle() instead of single()
+      // Load user prakriti
+      await loadUserPrakriti()
       
-      // maybeSingle() returns null if no rows found, no error
-      if (error) {
-        console.error('Database error:', error)
-        toast.error('Failed to load diet plan')
-        setPlan(getDefaultPlan())
+      // Load current plan
+      await loadCurrentPlan()
+      
+      // Load allergies from investigation
+      await loadAllergies()
+    } catch (error) {
+      console.error('Error loading data:', error)
+      toast.error('Failed to load meal plan data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadUserPrakriti = async () => {
+    try {
+      // Try user_profiles first
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('prakriti')
+        .eq('id', userId)
+        .single()
+
+      if (profile?.prakriti) {
+        setUserPrakriti({ prakriti: profile.prakriti, hasOnboarding: true })
         return
       }
-      
-      if (data) {
-        // Parse plan_json from database format
-        const parsedPlan: Plan = {
-          ...data,
-          plan: data.plan_json?.plan || data.plan_json || getDefaultPlan().plan,
-          summary: data.summary || 'Ayurvedic diet plan'
-        }
-        console.log('Loaded plan from database:', parsedPlan)
-        setPlan(parsedPlan)
+
+      // Try onboarding
+      const { data: onboarding } = await supabase
+        .from('onboarding')
+        .select('dominant_dosha, prakriti_summary')
+        .eq('user_id', userId)
+        .single()
+
+      if (onboarding) {
+        const prakriti = onboarding.dominant_dosha || onboarding.prakriti_summary?.dominant
+        setUserPrakriti({ 
+          prakriti: prakriti || null, 
+          hasOnboarding: true 
+        })
       } else {
-        // Show default plan if no AI plan exists
-        console.log('No plans found, showing default plan')
-        setPlan(getDefaultPlan())
+        setUserPrakriti({ prakriti: null, hasOnboarding: false })
+      }
+    } catch (error) {
+      console.error('Error loading prakriti:', error)
+      setUserPrakriti({ prakriti: null, hasOnboarding: false })
+    }
+  }
+
+  const loadCurrentPlan = async () => {
+    try {
+      const response = await fetch(`/api/plans/current?user_id=${userId}`)
+      const data = await response.json()
+      
+      if (data.plan) {
+        setPlan(data.plan)
+        // Set selected day to today or first day
+        if (data.plan.payload && data.plan.payload.length > 0) {
+          const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
+          const dayExists = data.plan.payload.find((d: PlanDay) => d.day === today)
+          setSelectedDay(dayExists ? today : data.plan.payload[0].day)
+        }
+      } else {
+        setPlan(null)
       }
     } catch (error) {
       console.error('Error loading plan:', error)
-      toast.error('Failed to load diet plan')
-      setPlan(getDefaultPlan())
+      setPlan(null)
     }
   }
 
-  const getDefaultPlan = (): Plan => {
-    return {
-      id: 'default',
-      user_id: userId,
-      summary: 'Balanced Ayurvedic diet plan focusing on whole foods, proper timing, and dosha balance.',
-      plan: [
-        {
-          day: 1,
-          morning: 'Warm water with lemon, herbal tea',
-          meals: 'Breakfast: Oatmeal with fruits and nuts. Lunch: Dal, brown rice, vegetables, roti. Dinner: Vegetable soup, salad',
-          evening: 'Herbal tea, light walk'
-        },
-        {
-          day: 2,
-          morning: 'Turmeric milk, soaked almonds',
-          meals: 'Breakfast: Poha with vegetables. Lunch: Quinoa pulao, dal. Dinner: Moong dal khichdi, yogurt',
-          evening: 'Chamomile tea, meditation'
-        },
-        {
-          day: 3,
-          morning: 'Warm water with honey, gentle yoga',
-          meals: 'Breakfast: Ragi dosa with coconut chutney. Lunch: Mixed vegetable curry, brown rice. Dinner: Lentil soup, roasted vegetables',
-          evening: 'Triphala powder with warm water'
-        },
-        {
-          day: 4,
-          morning: 'Herbal tea, fruits',
-          meals: 'Breakfast: Vegetable upma. Lunch: Rajma, brown rice, salad. Dinner: Vegetable stew, roti',
-          evening: 'Pranayama, warm milk with turmeric'
-        },
-        {
-          day: 5,
-          morning: 'Aloe vera juice, soaked walnuts',
-          meals: 'Breakfast: Sprouted moong salad. Lunch: Sambar, brown rice, vegetables. Dinner: Vegetable khichdi, pickles',
-          evening: 'Green tea, light walk'
-        },
-        {
-          day: 6,
-          morning: 'Warm water with lemon, meditation',
-          meals: 'Breakfast: Besan chilla with vegetables. Lunch: Dal fry, roti, vegetables. Dinner: Tomato soup, salad',
-          evening: 'Herbal tea, journaling'
-        },
-        {
-          day: 7,
-          morning: 'Turmeric milk, dates',
-          meals: 'Breakfast: Poha with peas. Lunch: Quinoa with vegetables, dal. Dinner: Moong dal khichdi, roasted papad',
-          evening: 'Ashwagandha powder with warm milk'
-        },
-        {
-          day: 8,
-          morning: 'Warm water with honey, gentle yoga',
-          meals: 'Breakfast: Oatmeal with fruits. Lunch: Mixed dal, brown rice, vegetables. Dinner: Lentil soup, salad',
-          evening: 'Herbal tea, pranayama'
-        },
-        {
-          day: 9,
-          morning: 'Aloe vera juice, soaked almonds',
-          meals: 'Breakfast: Vegetable paratha with yogurt. Lunch: Dal tadka, roti, vegetables. Dinner: Vegetable stew, brown rice',
-          evening: 'Triphala powder with warm water'
-        },
-        {
-          day: 10,
-          morning: 'Herbal tea, fruits',
-          meals: 'Breakfast: Sprouted moong salad. Lunch: Sambar, brown rice, vegetables. Dinner: Moong dal khichdi, pickles',
-          evening: 'Pranayama, warm milk with turmeric'
-        },
-        {
-          day: 11,
-          morning: 'Warm water with lemon, meditation',
-          meals: 'Breakfast: Besan chilla with vegetables. Lunch: Rajma, brown rice, salad. Dinner: Tomato soup, salad',
-          evening: 'Herbal tea, light walk'
-        },
-        {
-          day: 12,
-          morning: 'Turmeric milk, dates',
-          meals: 'Breakfast: Poha with vegetables. Lunch: Quinoa pulao, dal. Dinner: Vegetable khichdi, yogurt',
-          evening: 'Green tea, journaling'
-        },
-        {
-          day: 13,
-          morning: 'Aloe vera juice, soaked walnuts',
-          meals: 'Breakfast: Vegetable upma. Lunch: Mixed vegetable curry, brown rice. Dinner: Lentil soup, roti',
-          evening: 'Herbal tea, meditation'
-        },
-        {
-          day: 14,
-          morning: 'Warm water with honey, gentle yoga',
-          meals: 'Breakfast: Oatmeal with fruits and nuts. Lunch: Dal fry, roti, vegetables. Dinner: Moong dal khichdi, roasted vegetables',
-          evening: 'Ashwagandha powder with warm milk'
-        },
-        {
-          day: 15,
-          morning: 'Turmeric milk, soaked almonds',
-          meals: 'Breakfast: Ragi dosa with coconut chutney. Lunch: Dal, brown rice, vegetables, roti. Dinner: Vegetable soup, salad',
-          evening: 'Triphala powder with warm water, reflection'
-        }
-      ],
-      created_at: new Date().toISOString()
-    }
-  }
-
-  const handleGeneratePlan = async () => {
-    setLoading(true)
+  const loadAllergies = async () => {
     try {
-      // Track the click
-      await trackActivity(userId, 'generate_plan_click')
+      const { data: onboarding } = await supabase
+        .from('onboarding')
+        .select('investigation')
+        .eq('user_id', userId)
+        .single()
+
+      if (onboarding?.investigation?.medical_history?.allergies) {
+        const allergyText = onboarding.investigation.medical_history.allergies
+        // Simple parsing - split by comma or newline
+        const allergyList = allergyText.split(/[,\n]/).map(a => a.trim().toLowerCase()).filter(Boolean)
+        setAllergies(allergyList)
+      }
+    } catch (error) {
+      console.error('Error loading allergies:', error)
+    }
+  }
+
+  const handleApplySamplePlan = async () => {
+    setApplyingPlan(true)
+    try {
+      await trackActivity(userId, 'apply_sample_plan_click')
+      
+      const response = await fetch('/api/plans/apply-sample', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to apply sample plan')
+      }
+
+      toast.success('Sample plan applied successfully!')
+      await loadCurrentPlan()
+    } catch (error: any) {
+      console.error('Error applying sample plan:', error)
+      toast.error(error.message || 'Failed to apply sample plan')
+    } finally {
+      setApplyingPlan(false)
+    }
+  }
+
+  const handleGenerateAIPlan = async () => {
+    setGeneratingPlan(true)
+    try {
+      await trackActivity(userId, 'generate_ai_plan_click')
       
       const response = await fetch('/api/plans/generate', {
         method: 'POST',
@@ -194,180 +196,278 @@ export function MealLogging({ userId }: MealLoggingProps) {
         body: JSON.stringify({ user_id: userId })
       })
 
-      if (!response.ok) throw new Error('Failed to generate plan')
-
       const data = await response.json()
-      toast.success('New plan generated!')
-      
-      // Reload the plan
-      loadPlan()
-    } catch (error) {
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate plan')
+      }
+
+      toast.success('AI plan generated successfully!')
+      await loadCurrentPlan()
+    } catch (error: any) {
       console.error('Error generating plan:', error)
-      toast.error('Failed to generate new plan')
+      toast.error(error.message || 'Failed to generate plan')
     } finally {
-      setLoading(false)
+      setGeneratingPlan(false)
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+  const handleMarkMealEaten = async (day: string, mealSlot: string, menuText: string) => {
+    try {
+      const response = await fetch('/api/meals/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userId,
+          plan_id: plan?.id,
+          date: new Date().toISOString().split('T')[0],
+          meal_slot: mealSlot === '12pm' ? 'snack12' : mealSlot === '6pm' ? 'snack6' : mealSlot,
+          menu_text: menuText,
+          source: 'plan',
+          created_via: 'meal_logging_ui'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to log meal')
+      }
+
+      toast.success('Meal marked as eaten!')
+      await trackActivity(userId, 'meal_marked_eaten')
+    } catch (error) {
+      console.error('Error marking meal:', error)
+      toast.error('Failed to mark meal as eaten')
+    }
+  }
+
+  const checkAllergyConflict = (mealText: string): string | null => {
+    if (allergies.length === 0) return null
+    
+    const normalizedMeal = mealText.toLowerCase()
+    const conflict = allergies.find(allergy => normalizedMeal.includes(allergy))
+    return conflict || null
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-8 bg-muted animate-pulse rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="h-64 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // No prakriti - show CTA to complete assessment
+  if (!userPrakriti.hasOnboarding || !userPrakriti.prakriti) {
+    return (
+      <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Your 15-Day Diet Plan</h1>
+          <h1 className="text-3xl font-bold mb-2">Meal Logging</h1>
           <p className="text-muted-foreground">
-            Follow this personalized Ayurvedic meal plan for optimal health
+            Track your meals from your personalized diet plan
           </p>
         </div>
-        <Button 
-          onClick={handleGeneratePlan} 
-          disabled={loading}
-          className="rounded-xl"
-        >
-          {loading ? 'Generating...' : 'Generate New Plan'}
-        </Button>
+        
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="space-y-4">
+              <p className="font-semibold">Complete your Prakriti Assessment to generate a personalized diet plan</p>
+              <p className="text-sm text-muted-foreground">
+                Your meal plan will be customized based on your unique Ayurvedic constitution (Prakriti).
+              </p>
+              <Button 
+                onClick={() => router.push('/onboarding')}
+                className="mt-2"
+              >
+                Go to Prakriti Assessment
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  // Has prakriti but no plan - show CTA to apply sample plan
+  if (!plan) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Meal Logging</h1>
+          <p className="text-muted-foreground">
+            Track your meals from your personalized diet plan
+          </p>
+        </div>
+        
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UtensilsCrossed className="h-5 w-5 text-primary" />
+              Apply Your {userPrakriti.prakriti.charAt(0).toUpperCase() + userPrakriti.prakriti.slice(1)} Diet Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              You have completed your Prakriti assessment. Apply a 7-day sample plan based on your {userPrakriti.prakriti} constitution, 
+              or generate a custom AI-powered 15-day plan.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                onClick={handleApplySamplePlan}
+                disabled={applyingPlan}
+                className="flex-1"
+              >
+                {applyingPlan ? 'Applying...' : 'Apply 7-Day Sample Plan'}
+              </Button>
+              <Button 
+                onClick={handleGenerateAIPlan}
+                disabled={generatingPlan}
+                variant="outline"
+                className="flex-1"
+              >
+                {generatingPlan ? 'Generating...' : 'Generate AI Plan (15 Days)'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Sample plans are based on canonical Ayurvedic meal plans. AI plans are personalized based on your investigation data.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Has plan - show meal plan
+  const currentDay = plan.payload.find((d: PlanDay) => d.day === selectedDay) || plan.payload[0]
+  const daysOfWeek = plan.payload.map((d: PlanDay) => d.day)
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Your Meal Plan</h1>
+          <p className="text-muted-foreground">
+            {plan.plan_type === 'sample' ? '7-day' : '15-day'} {plan.prakriti} plan
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleGenerateAIPlan}
+            disabled={generatingPlan}
+            variant="outline"
+            size="sm"
+          >
+            {generatingPlan ? 'Generating...' : 'Regenerate Plan (AI)'}
+          </Button>
+        </div>
       </div>
 
-      {plan && (
-        <>
-          <Card className="rounded-xl shadow-md border-border bg-primary/5">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-2">Plan Overview</h3>
-              <p className="text-muted-foreground">{plan.summary}</p>
-            </CardContent>
-          </Card>
+      {/* Plan Metadata */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Badge variant={plan.plan_type === 'sample' ? 'default' : 'secondary'}>
+                {plan.plan_type === 'sample' ? 'Sample Plan' : 'AI Generated'}
+              </Badge>
+              <span className="text-muted-foreground">
+                {plan.prakriti.charAt(0).toUpperCase() + plan.prakriti.slice(1)} Plan
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {new Date(plan.start_date).toLocaleDateString()} - {new Date(plan.end_date).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plan.plan.map((day) => (
-              <Card key={day.day} className="rounded-xl shadow-md border-border hover:shadow-lg transition-shadow">
+      {/* Day Selector */}
+      <div className="flex flex-wrap gap-2">
+        {daysOfWeek.map((day: string) => (
+          <Button
+            key={day}
+            variant={selectedDay === day ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSelectedDay(day)}
+          >
+            {day}
+          </Button>
+        ))}
+      </div>
+
+      {/* Current Day Meals */}
+      {currentDay && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            { slot: 'breakfast', label: 'Breakfast', icon: '🌅' },
+            { slot: '12pm', label: '12 PM Snack', icon: '🍎' },
+            { slot: 'lunch', label: 'Lunch', icon: '🍽️' },
+            { slot: '6pm', label: '6 PM Snack', icon: '🥜' },
+            { slot: 'dinner', label: 'Dinner', icon: '🌙' }
+          ].map(({ slot, label, icon }) => {
+            const mealText = currentDay[slot as keyof PlanDay] as string
+            if (!mealText) return null
+            
+            const allergyConflict = checkAllergyConflict(mealText)
+            const mealSlot = slot === '12pm' ? 'snack12' : slot === '6pm' ? 'snack6' : slot
+
+            return (
+              <Card 
+                key={slot} 
+                className={`${allergyConflict ? 'border-warning bg-warning/5' : ''}`}
+              >
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Day {day.day}</span>
-                    <span className="text-2xl">📅</span>
+                  <CardTitle className="text-base flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <span>{icon}</span>
+                      {label}
+                    </span>
+                    {allergyConflict && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <AlertCircle className="h-4 w-4 text-warning" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Check with doctor: contains {allergyConflict}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold text-sm text-primary mb-1 flex items-center">
-                      🌅 Morning
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{day.morning}</p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold text-sm text-primary mb-2 flex items-center">
-                      🍽️ Meals
-                    </h4>
-                    <div className="space-y-3">
-                      {(() => {
-                        // Check if we have new structured format (all three meals as separate fields)
-                        const hasNewFormat = day.breakfast && day.lunch && day.dinner
-                        
-                        if (hasNewFormat) {
-                          // New structured format - all three meals exist
-                          return (
-                            <>
-                              <div>
-                                <span className="font-bold text-sm text-foreground">Breakfast:</span>
-                                <p className="text-sm text-muted-foreground mt-1 ml-0">{day.breakfast}</p>
-                              </div>
-                              <div>
-                                <span className="font-bold text-sm text-foreground">Lunch:</span>
-                                <p className="text-sm text-muted-foreground mt-1 ml-0">{day.lunch}</p>
-                              </div>
-                              <div>
-                                <span className="font-bold text-sm text-foreground">Dinner:</span>
-                                <p className="text-sm text-muted-foreground mt-1 ml-0">{day.dinner}</p>
-                              </div>
-                            </>
-                          )
-                        }
-                        
-                        // Try to parse legacy format from meals field
-                        const mealsText = day.meals || ''
-                        if (mealsText) {
-                          // Better parsing: split by meal keywords and extract content
-                          // Use [\s\S] instead of . to match any character including newlines
-                          const breakfastRegex = /Breakfast[:\s]+([\s\S]+?)(?=\s*(?:Lunch|Dinner|$))/i
-                          const lunchRegex = /Lunch[:\s]+([\s\S]+?)(?=\s*(?:Dinner|$))/i
-                          const dinnerRegex = /Dinner[:\s]+([\s\S]+?)(?=\s*(?:Breakfast|Lunch|$)|$)/i
-                          
-                          const breakfastMatch = mealsText.match(breakfastRegex)
-                          const lunchMatch = mealsText.match(lunchRegex)
-                          const dinnerMatch = mealsText.match(dinnerRegex)
-                          
-                          // If we found at least one meal, display them
-                          if (breakfastMatch || lunchMatch || dinnerMatch) {
-                            return (
-                              <>
-                                {breakfastMatch && (
-                                  <div>
-                                    <span className="font-bold text-sm text-foreground">Breakfast:</span>
-                                    <p className="text-sm text-muted-foreground mt-1 ml-0">{breakfastMatch[1].trim().replace(/\.$/, '')}</p>
-                                  </div>
-                                )}
-                                {lunchMatch && (
-                                  <div>
-                                    <span className="font-bold text-sm text-foreground">Lunch:</span>
-                                    <p className="text-sm text-muted-foreground mt-1 ml-0">{lunchMatch[1].trim().replace(/\.$/, '')}</p>
-                                  </div>
-                                )}
-                                {dinnerMatch && (
-                                  <div>
-                                    <span className="font-bold text-sm text-foreground">Dinner:</span>
-                                    <p className="text-sm text-muted-foreground mt-1 ml-0">{dinnerMatch[1].trim().replace(/\.$/, '')}</p>
-                                  </div>
-                                )}
-                              </>
-                            )
-                          }
-                          
-                          // Fallback: show as-is if parsing fails
-                          return <p className="text-sm text-muted-foreground">{day.meals}</p>
-                        }
-                        
-                        // If we have partial new format (some meals but not all), show what we have
-                        if (day.breakfast || day.lunch || day.dinner) {
-                          return (
-                            <>
-                              {day.breakfast && (
-                                <div>
-                                  <span className="font-bold text-sm text-foreground">Breakfast:</span>
-                                  <p className="text-sm text-muted-foreground mt-1 ml-0">{day.breakfast}</p>
-                                </div>
-                              )}
-                              {day.lunch && (
-                                <div>
-                                  <span className="font-bold text-sm text-foreground">Lunch:</span>
-                                  <p className="text-sm text-muted-foreground mt-1 ml-0">{day.lunch}</p>
-                                </div>
-                              )}
-                              {day.dinner && (
-                                <div>
-                                  <span className="font-bold text-sm text-foreground">Dinner:</span>
-                                  <p className="text-sm text-muted-foreground mt-1 ml-0">{day.dinner}</p>
-                                </div>
-                              )}
-                            </>
-                          )
-                        }
-                        
-                        // Final fallback
-                        return <p className="text-sm text-muted-foreground">No meal information available</p>
-                      })()}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="font-semibold text-sm text-primary mb-1 flex items-center">
-                      🌙 Evening
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{day.evening}</p>
+                <CardContent className="space-y-3">
+                  <p className={`text-sm ${allergyConflict ? 'text-muted-foreground line-through' : ''}`}>
+                    {mealText}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="text-xs">
+                      From SwasthPrameh {plan.prakriti.charAt(0).toUpperCase() + plan.prakriti.slice(1)} Plan
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleMarkMealEaten(selectedDay || '', mealSlot, mealText)}
+                      className="h-7 text-xs"
+                    >
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Mark Eaten
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </>
+            )
+          })}
+        </div>
       )}
     </div>
   )

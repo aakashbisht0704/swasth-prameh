@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { isRelevantQuery, REFUSAL_MESSAGE } from '@/lib/ai/systemPrompts'
+import { normalizePrakriti, getAllowedItemsPrompt } from '@/lib/meal-plan-utils'
 
 export async function POST(req: Request) {
   try {
@@ -35,8 +36,25 @@ export async function POST(req: Request) {
     if (diagnosisError) console.error('Diagnosis fetch error:', diagnosisError)
     if (plansError) console.error('Plans fetch error:', plansError)
 
-    const context = { onboarding, diagnosis, plan: plans?.[0] }
-    console.log('Context loaded:', { hasOnboarding: !!onboarding, hasDiagnosis: !!diagnosis, hasPlan: !!plans?.[0] })
+    // Get user's prakriti for meal constraints
+    const prakriti = onboarding?.dominant_dosha || onboarding?.prakriti_summary?.dominant || onboarding?.prakriti
+    const normalizedPrakriti = normalizePrakriti(prakriti)
+    const allowedMealItems = normalizedPrakriti ? getAllowedItemsPrompt(normalizedPrakriti) : null
+
+    const context = { 
+      onboarding, 
+      diagnosis, 
+      plan: plans?.[0],
+      // Include canonical meal constraints if user has prakriti
+      ...(normalizedPrakriti && allowedMealItems ? {
+        canonical_meal_constraints: {
+          prakriti: normalizedPrakriti,
+          allowed_meal_items: allowedMealItems,
+          instruction: `When suggesting meals, you MUST ONLY use items from this exact list for ${normalizedPrakriti}: ${allowedMealItems}. Do not invent or modify items.`
+        }
+      } : {})
+    }
+    console.log('Context loaded:', { hasOnboarding: !!onboarding, hasDiagnosis: !!diagnosis, hasPlan: !!plans?.[0], hasMealConstraints: !!allowedMealItems })
 
     const llmUrl = process.env.LLM_SERVER_URL || process.env.NEXT_PUBLIC_LLM_SERVER_URL
     if (!llmUrl) {

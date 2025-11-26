@@ -5,7 +5,6 @@ import { About } from '@/components/landing/About'
 import { Team } from '@/components/landing/Team'
 import { Services } from '@/components/landing/Services'
 import { Testimonials } from '@/components/landing/Testimonials'
-import { Resources } from '@/components/landing/Resources'
 import { FAQ } from '@/components/landing/FAQ'
 import { Contact } from '@/components/landing/Contact'
 
@@ -17,7 +16,6 @@ export default function HomePage() {
       <Team />
       <Services />
       <Testimonials />
-      <Resources />
       <FAQ />
       <Contact />
     </main>

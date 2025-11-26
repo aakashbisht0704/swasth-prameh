@@ -19,7 +19,6 @@ const navLinks = [
 
 const moreDropdownLinks = [
   { label: 'Services', href: '#services' },
-  { label: 'Blog/Resources', href: '#resources' },
   { label: 'Contact Us', href: '#contact' },
 ]
 

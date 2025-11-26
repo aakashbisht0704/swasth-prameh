@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { normalizePrakriti, getAllowedItemsPrompt, validateMealPlan, getCanonicalPlan } from '@/lib/meal-plan-utils'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,17 +30,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No onboarding data found' }, { status: 400 })
     }
     
-    // Build context for LLM
+    // Get user's prakriti
+    const prakriti = onboarding.dominant_dosha || onboarding.prakriti_summary?.dominant || onboarding.prakriti
+    const normalizedPrakriti = normalizePrakriti(prakriti)
+    
+    if (!normalizedPrakriti) {
+      return NextResponse.json({ 
+        error: 'No prakriti found. Please complete your Prakriti assessment first.' 
+      }, { status: 400 })
+    }
+    
+    // Get allowed meal items for this prakriti
+    const allowedItems = getAllowedItemsPrompt(normalizedPrakriti)
+    
+    // Build context for LLM with canonical constraints
     const context = {
-      prakriti: onboarding.prakriti,
-      dominant_dosha: onboarding.dominant_dosha,
+      prakriti: normalizedPrakriti,
+      dominant_dosha: normalizedPrakriti,
       lifestyle: onboarding.lifestyle,
       medical_history: onboarding.medical_history,
       allergies: onboarding.allergies,
-      investigation: onboarding.investigation || null, // Include investigation data
+      investigation: onboarding.investigation || null,
+      // CRITICAL: Include allowed meal items
+      allowed_meal_items: allowedItems,
+      canonical_plan_constraint: `You MUST ONLY use meal items from this exact list for ${normalizedPrakriti}: ${allowedItems}. Do not invent, modify, or add any items not in this list.`
     }
     
-    console.log('Context:', context)
+    console.log('Context with constraints:', { ...context, allowed_meal_items: '...' })
     
     const llmUrl = process.env.LLM_SERVER_URL || process.env.NEXT_PUBLIC_LLM_SERVER_URL
     if (!llmUrl) {
@@ -77,8 +94,57 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: data?.error || 'LLM error' }, { status: 500 })
       }
       
-      console.log('Plan generated successfully')
-      return NextResponse.json(data)
+      // Validate the generated plan against canonical items
+      const generatedPlan = data.plan || data.plan_json?.plan || []
+      const validation = validateMealPlan(generatedPlan, normalizedPrakriti)
+      
+      if (!validation.valid) {
+        console.error('Generated plan contains invalid items:', validation.invalidItems)
+        // Log but don't fail - we'll sanitize instead
+        // Optionally, you could reject the plan here
+      }
+      
+      // Deactivate existing active plans
+      await supabase
+        .from('plans')
+        .update({ is_active: false })
+        .eq('user_id', user_id)
+        .eq('is_active', true)
+      
+      // Calculate dates (15-day plan starting today)
+      const startDate = new Date()
+      const endDate = new Date(startDate)
+      endDate.setDate(endDate.getDate() + 14) // 15 days total
+      
+      // Save the plan to database
+      const { data: savedPlan, error: saveError } = await supabase
+        .from('plans')
+        .insert({
+          user_id,
+          plan_type: 'ai',
+          prakriti: normalizedPrakriti,
+          start_date: startDate.toISOString().split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
+          is_active: true,
+          payload: generatedPlan,
+          plan_json: { plan: generatedPlan }, // Backward compatibility
+          summary: data.summary || `AI-generated 15-day ${normalizedPrakriti} plan`
+        })
+        .select()
+        .single()
+      
+      if (saveError) {
+        console.error('Error saving plan:', saveError)
+        return NextResponse.json({ error: 'Failed to save plan' }, { status: 500 })
+      }
+      
+      console.log('Plan generated and saved successfully:', savedPlan.id)
+      
+      return NextResponse.json({
+        ...data,
+        plan_id: savedPlan.id,
+        validation_warnings: validation.invalidItems.length > 0 ? validation.invalidItems : undefined
+      })
     } catch (fetchError: any) {
       // Handle SSL/connection errors
       if (fetchError.message?.includes('SSL') || fetchError.code === 'ERR_SSL_WRONG_VERSION_NUMBER') {

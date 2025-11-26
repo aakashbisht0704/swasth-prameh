@@ -11,9 +11,7 @@ const footerLinks = {
     { label: 'Contact Us', href: '#contact' },
   ],
   resources: [
-    { label: 'Resources', href: '#resources' },
-    { label: 'Blog', href: '/resources' },
-    { label: 'FAQs', href: '/resources#faq' },
+    { label: 'FAQs', href: '#faq' },
     { label: 'Patient Portal', href: '/dashboard' },
   ],
   legal: [
