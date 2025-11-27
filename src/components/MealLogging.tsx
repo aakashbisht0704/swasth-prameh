@@ -515,7 +515,11 @@ export function MealLogging({ userId }: MealLoggingProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {plan.payload.map((day: PlanDay, index: number) => {
           const dayNumber = index + 1
-          const dayLabel = day.day?.replace('DAY_', '') || day.day || `Day ${dayNumber}`
+          // Safely convert day.day to string before using replace
+          const dayDayStr = day.day ? String(day.day) : ''
+          const dayLabel = dayDayStr && dayDayStr.includes('DAY_') 
+            ? dayDayStr.replace('DAY_', '') 
+            : dayDayStr || `Day ${dayNumber}`
           
           return (
             <Card key={index} className="rounded-xl shadow-md border-border hover:shadow-lg transition-shadow">
