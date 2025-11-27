@@ -434,12 +434,12 @@ export function MealLogging({ userId }: MealLoggingProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UtensilsCrossed className="h-5 w-5 text-primary" />
-              Apply Your {userPrakriti.prakriti.charAt(0).toUpperCase() + userPrakriti.prakriti.slice(1)} Diet Plan
+              Apply Your {userPrakriti.prakriti ? (userPrakriti.prakriti.charAt(0).toUpperCase() + userPrakriti.prakriti.slice(1)) : 'Personalized'} Diet Plan
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              You have completed your Prakriti assessment. Apply a 7-day sample plan based on your {userPrakriti.prakriti} constitution, 
+              You have completed your Prakriti assessment. Apply a 7-day sample plan{userPrakriti.prakriti ? ` based on your ${userPrakriti.prakriti} constitution` : ''}, 
               or generate a custom AI-powered 15-day plan.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -502,7 +502,7 @@ export function MealLogging({ userId }: MealLoggingProps) {
                 {plan.plan_type === 'sample' ? 'Sample Plan' : 'AI Generated'}
               </Badge>
               <span className="text-muted-foreground">
-                {plan.prakriti.charAt(0).toUpperCase() + plan.prakriti.slice(1)} Plan
+                {plan.prakriti ? (plan.prakriti.charAt(0).toUpperCase() + plan.prakriti.slice(1)) : 'Personalized'} Plan
               </span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -576,7 +576,7 @@ export function MealLogging({ userId }: MealLoggingProps) {
                   </p>
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="text-xs">
-                      From SwasthPrameh {plan.prakriti.charAt(0).toUpperCase() + plan.prakriti.slice(1)} Plan
+                      From SwasthPrameh {plan.prakriti ? (plan.prakriti.charAt(0).toUpperCase() + plan.prakriti.slice(1)) : 'Personalized'} Plan
                     </Badge>
                     <Button
                       size="sm"
