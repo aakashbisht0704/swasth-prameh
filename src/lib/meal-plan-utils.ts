@@ -40,42 +40,93 @@ export function isAllowedMealItem(mealText: string, prakriti: PrakritiType): boo
   )
 }
 
-// Validate a meal plan against canonical items
+// Get all meals from OTHER prakritis (for cross-contamination detection)
+function getOtherPrakritiMeals(currentPrakriti: PrakritiType): Set<string> {
+  const allPrakritis: PrakritiType[] = ['kaphaj', 'pittaj', 'vataja']
+  const otherPrakritis = allPrakritis.filter(p => p !== currentPrakriti)
+  const otherMeals = new Set<string>()
+  
+  otherPrakritis.forEach(prakriti => {
+    const items = getAllowedMealItems(prakriti)
+    items.forEach(item => otherMeals.add(item))
+  })
+  
+  return otherMeals
+}
+
+// Validate a meal plan against canonical items with strict prakriti checking
 export function validateMealPlan(
   plan: any, 
   prakriti: PrakritiType
-): { valid: boolean; invalidItems: string[] } {
+): { valid: boolean; invalidItems: string[]; crossContamination: string[] } {
   const invalidItems: string[] = []
+  const crossContamination: string[] = []
   const allowedItems = getAllowedMealItems(prakriti)
+  const otherPrakritiMeals = getOtherPrakritiMeals(prakriti)
   
   if (!plan || !Array.isArray(plan)) {
-    return { valid: false, invalidItems: ['Plan is not a valid array'] }
+    return { valid: false, invalidItems: ['Plan is not a valid array'], crossContamination: [] }
   }
   
   plan.forEach((day: any, index: number) => {
     const meals = [
-      day.breakfast,
-      day['12pm'] || day.snack12 || day.midMorning,
-      day.lunch,
-      day['6pm'] || day.snack6 || day.evening,
-      day.dinner
-    ].filter(Boolean)
+      { slot: 'breakfast', text: day.breakfast },
+      { slot: '12pm', text: day['12pm'] || day.snack12 || day.midMorning },
+      { slot: 'lunch', text: day.lunch },
+      { slot: '6pm', text: day['6pm'] || day.snack6 || day.evening },
+      { slot: 'dinner', text: day.dinner }
+    ].filter(m => m.text)
     
-    meals.forEach((meal: string) => {
-      const normalizedMeal = meal.toLowerCase().trim()
-      const isAllowed = allowedItems.some(item => 
-        normalizedMeal.includes(item) || item.includes(normalizedMeal)
-      )
+    meals.forEach(({ slot, text }) => {
+      const normalizedMeal = text.toLowerCase().trim()
       
-      if (!isAllowed) {
-        invalidItems.push(`Day ${index + 1}: ${meal}`)
+      // First check: Is this meal from another prakriti? (cross-contamination)
+      const isFromOtherPrakriti = Array.from(otherPrakritiMeals).some(otherMeal => {
+        const normalizedOther = otherMeal.toLowerCase().trim()
+        // Check if the meal text contains a significant portion of the other prakriti's meal
+        // Use a more strict check: the meal should match at least 70% of the other meal's words
+        const otherWords = normalizedOther.split(/\s+/).filter(w => w.length > 2)
+        const mealWords = normalizedMeal.split(/\s+/).filter(w => w.length > 2)
+        const matchingWords = otherWords.filter(w => mealWords.includes(w))
+        return matchingWords.length >= Math.ceil(otherWords.length * 0.7)
+      })
+      
+      if (isFromOtherPrakriti) {
+        crossContamination.push(`Day ${index + 1} ${slot}: ${text} (appears to be from another prakriti)`)
+      }
+      
+      // Second check: Is this meal in the allowed list for this prakriti?
+      // Use exact match or very close match (at least 80% word overlap)
+      const isAllowed = allowedItems.some(item => {
+        const normalizedItem = item.toLowerCase().trim()
+        
+        // Exact match
+        if (normalizedMeal === normalizedItem) return true
+        
+        // Check word overlap for compound meals
+        const itemWords = normalizedItem.split(/\s+/).filter(w => w.length > 2)
+        const mealWords = normalizedMeal.split(/\s+/).filter(w => w.length > 2)
+        
+        if (itemWords.length === 0 || mealWords.length === 0) {
+          // Fallback to substring match for single words
+          return normalizedMeal.includes(normalizedItem) || normalizedItem.includes(normalizedMeal)
+        }
+        
+        // Check if at least 80% of item words are in the meal
+        const matchingWords = itemWords.filter(w => mealWords.includes(w))
+        return matchingWords.length >= Math.ceil(itemWords.length * 0.8)
+      })
+      
+      if (!isAllowed && !isFromOtherPrakriti) {
+        invalidItems.push(`Day ${index + 1} ${slot}: ${text}`)
       }
     })
   })
   
   return {
-    valid: invalidItems.length === 0,
-    invalidItems
+    valid: invalidItems.length === 0 && crossContamination.length === 0,
+    invalidItems,
+    crossContamination
   }
 }
 

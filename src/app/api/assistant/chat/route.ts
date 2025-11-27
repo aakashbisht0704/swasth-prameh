@@ -50,6 +50,7 @@ export async function POST(req: Request) {
         canonical_meal_constraints: {
           prakriti: normalizedPrakriti,
           allowed_meal_items: allowedMealItems,
+          prakriti_specific_constraint: normalizedPrakriti ? `CRITICAL: The user's prakriti is ${normalizedPrakriti}. You MUST ONLY suggest meal items from the allowed_meal_items list above. NEVER suggest items from other prakritis (e.g., do NOT suggest Kapha items to Pitta users, or Pitta items to Vata users).` : null,
           instruction: `When suggesting meals, you MUST ONLY use items from this exact list for ${normalizedPrakriti}: ${allowedMealItems}. Do not invent or modify items.`
         }
       } : {})

@@ -70,7 +70,16 @@ export async function POST(req: Request) {
       investigation: onboarding.investigation || null,
       // CRITICAL: Include allowed meal items
       allowed_meal_items: allowedItems,
-      canonical_plan_constraint: `You MUST ONLY use meal items from this exact list for ${normalizedPrakriti}: ${allowedItems}. Do not invent, modify, or add any items not in this list.`
+      canonical_plan_constraint: `CRITICAL: You MUST ONLY use meal items from this exact list for ${normalizedPrakriti}: ${allowedItems}. 
+
+ABSOLUTELY FORBIDDEN:
+- Do NOT use any items from Kapha plan if user is Pitta or Vata
+- Do NOT use any items from Pitta plan if user is Kapha or Vata  
+- Do NOT use any items from Vata plan if user is Kapha or Pitta
+- Do not invent, modify, or add any items not in this list
+- Each meal must match EXACTLY one item from the allowed list
+
+The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above for this specific prakriti.`
     }
     
     console.log('Context with constraints:', { ...context, allowed_meal_items: '...' })
@@ -128,9 +137,19 @@ export async function POST(req: Request) {
         const validation = validateMealPlan(generatedPlan, normalizedPrakriti)
         
         if (!validation.valid) {
-          console.error('Generated plan contains invalid items:', validation.invalidItems)
-          // If too many invalid items, fall back to canonical plan
-          if (validation.invalidItems.length > generatedPlan.length * 0.3) {
+          console.error('Generated plan validation failed:', {
+            invalidItems: validation.invalidItems,
+            crossContamination: validation.crossContamination
+          })
+          
+          // CRITICAL: If ANY cross-contamination detected, immediately fall back to canonical plan
+          if (validation.crossContamination.length > 0) {
+            console.error('CROSS-CONTAMINATION DETECTED: Plan contains items from wrong prakriti!', validation.crossContamination)
+            if (canonicalPlan) {
+              generatedPlan = generate15DayPlan(canonicalPlan)
+            }
+          } else if (validation.invalidItems.length > generatedPlan.length * 0.3) {
+            // If too many invalid items (but no cross-contamination), fall back to canonical plan
             console.warn('Too many invalid items, falling back to canonical plan')
             if (canonicalPlan) {
               generatedPlan = generate15DayPlan(canonicalPlan)
@@ -157,8 +176,16 @@ export async function POST(req: Request) {
         }
       }
       
-      // Final validation
+      // Final validation (after any sanitization)
       const finalValidation = validateMealPlan(generatedPlan, normalizedPrakriti)
+      
+      // Log final validation results
+      if (!finalValidation.valid) {
+        console.warn('Final plan validation warnings:', {
+          invalidItems: finalValidation.invalidItems,
+          crossContamination: finalValidation.crossContamination
+        })
+      }
       
       // Deactivate existing active plans
       await supabase
@@ -199,7 +226,8 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ...data,
         plan_id: savedPlan.id,
-        validation_warnings: finalValidation.invalidItems.length > 0 ? finalValidation.invalidItems : undefined
+        validation_warnings: finalValidation.invalidItems.length > 0 ? finalValidation.invalidItems : undefined,
+        cross_contamination_detected: finalValidation.crossContamination.length > 0 ? finalValidation.crossContamination : undefined
       })
     } catch (fetchError: any) {
       // Handle SSL/connection errors

@@ -43,7 +43,7 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: SYSTEM_PROMPT_PLAN_GENERATION + '\n\nCRITICAL: Generate EXACTLY 15 days. Use ONLY the meal items provided in the context. Output STRICT JSON only, with schema: {"summary": string, "plan": [{"day": string, "breakfast": string, "12pm": string, "lunch": string, "6pm": string, "dinner": string}], "markdown_table": string}. The plan array MUST have exactly 15 items. Use ONLY meal items from the allowed_meal_items list in the context. Do not invent or modify items. The markdown_table should be a formatted table. Do not include any extra text.'
+        content: SYSTEM_PROMPT_PLAN_GENERATION + '\n\nCRITICAL RULES - STRICTLY ENFORCED:\n1. Generate EXACTLY 15 days.\n2. Use ONLY the meal items provided in context.allowed_meal_items for the user\'s specific prakriti.\n3. NEVER use items from other prakritis (Kapha items for Pitta users, Pitta items for Vata users, etc.).\n4. The user\'s prakriti is specified in context.prakriti - use ONLY items from that prakriti\'s canonical list.\n5. Output STRICT JSON only, with schema: {"summary": string, "plan": [{"day": string, "breakfast": string, "12pm": string, "lunch": string, "6pm": string, "dinner": string}], "markdown_table": string}.\n6. The plan array MUST have exactly 15 items.\n7. Do not invent or modify items.\n8. The markdown_table should be a formatted table.\n9. Do not include any extra text.'
       },
       { role: 'user', content: JSON.stringify(context) }
     ]
