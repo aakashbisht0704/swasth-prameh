@@ -45,19 +45,25 @@ export async function POST(req: Request) {
     // Use provided date or default to today
     const mealDate = date || new Date().toISOString().split('T')[0]
     
-    // Create meal log entry
+    // Create meal log entry (created_via is optional - only include if column exists)
+    const insertData: any = {
+      user_id,
+      plan_id: plan_id || null,
+      date: mealDate,
+      meal_slot,
+      menu_text,
+      notes: notes || null,
+      source
+    }
+    
+    // Only include created_via if it's provided (column might not exist in older schemas)
+    if (created_via) {
+      insertData.created_via = created_via
+    }
+    
     const { data: mealLog, error } = await supabase
       .from('meal_logs')
-      .insert({
-        user_id,
-        plan_id: plan_id || null,
-        date: mealDate,
-        meal_slot,
-        menu_text,
-        notes: notes || null,
-        source,
-        created_via: created_via || null
-      })
+      .insert(insertData)
       .select()
       .single()
     

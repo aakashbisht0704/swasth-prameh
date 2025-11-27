@@ -80,22 +80,7 @@ export function validateMealPlan(
     meals.forEach(({ slot, text }) => {
       const normalizedMeal = text.toLowerCase().trim()
       
-      // First check: Is this meal from another prakriti? (cross-contamination)
-      const isFromOtherPrakriti = Array.from(otherPrakritiMeals).some(otherMeal => {
-        const normalizedOther = otherMeal.toLowerCase().trim()
-        // Check if the meal text contains a significant portion of the other prakriti's meal
-        // Use a more strict check: the meal should match at least 70% of the other meal's words
-        const otherWords = normalizedOther.split(/\s+/).filter(w => w.length > 2)
-        const mealWords = normalizedMeal.split(/\s+/).filter(w => w.length > 2)
-        const matchingWords = otherWords.filter(w => mealWords.includes(w))
-        return matchingWords.length >= Math.ceil(otherWords.length * 0.7)
-      })
-      
-      if (isFromOtherPrakriti) {
-        crossContamination.push(`Day ${index + 1} ${slot}: ${text} (appears to be from another prakriti)`)
-      }
-      
-      // Second check: Is this meal in the allowed list for this prakriti?
+      // FIRST check: Is this meal in the allowed list for this prakriti?
       // Use exact match or very close match (at least 80% word overlap)
       const isAllowed = allowedItems.some(item => {
         const normalizedItem = item.toLowerCase().trim()
@@ -117,7 +102,27 @@ export function validateMealPlan(
         return matchingWords.length >= Math.ceil(itemWords.length * 0.8)
       })
       
-      if (!isAllowed && !isFromOtherPrakriti) {
+      // If it's allowed for this prakriti, it's valid (even if it also appears in other lists)
+      if (isAllowed) {
+        return // Skip further checks - this meal is valid
+      }
+      
+      // If NOT allowed for this prakriti, check if it's from another prakriti (cross-contamination)
+      // Only flag as cross-contamination if it's NOT in current list BUT appears in another list
+      const isFromOtherPrakriti = Array.from(otherPrakritiMeals).some(otherMeal => {
+        const normalizedOther = otherMeal.toLowerCase().trim()
+        // Check if the meal text contains a significant portion of the other prakriti's meal
+        // Use a more strict check: the meal should match at least 70% of the other meal's words
+        const otherWords = normalizedOther.split(/\s+/).filter(w => w.length > 2)
+        const mealWords = normalizedMeal.split(/\s+/).filter(w => w.length > 2)
+        const matchingWords = otherWords.filter(w => mealWords.includes(w))
+        return matchingWords.length >= Math.ceil(otherWords.length * 0.7)
+      })
+      
+      if (isFromOtherPrakriti) {
+        crossContamination.push(`Day ${index + 1} ${slot}: ${text} (appears to be from another prakriti)`)
+      } else {
+        // Not in current list and not in other lists - just invalid
         invalidItems.push(`Day ${index + 1} ${slot}: ${text}`)
       }
     })
