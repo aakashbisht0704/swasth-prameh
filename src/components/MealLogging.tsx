@@ -144,13 +144,6 @@ export function MealLogging({ userId }: MealLoggingProps) {
         const planData = await planResponse.json()
         loadedPlan = planData.plan || null
         setPlan(loadedPlan)
-        
-        // Set selected day if plan exists
-        if (loadedPlan?.payload && loadedPlan.payload.length > 0) {
-          const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
-          const dayExists = loadedPlan.payload.find((d: PlanDay) => d.day === today)
-          setSelectedDay(dayExists ? today : loadedPlan.payload[0].day)
-        }
       } else {
         setPlan(null)
       }
@@ -176,11 +169,6 @@ export function MealLogging({ userId }: MealLoggingProps) {
             const reloadData = await reloadResponse.json()
             if (reloadData.plan) {
               setPlan(reloadData.plan)
-              if (reloadData.plan.payload && reloadData.plan.payload.length > 0) {
-                const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase()
-                const dayExists = reloadData.plan.payload.find((d: PlanDay) => d.day === today)
-                setSelectedDay(dayExists ? today : reloadData.plan.payload[0].day)
-              }
             }
           }
         } catch (error) {

@@ -63,7 +63,33 @@ export async function POST(req: Request) {
     
     if (error) {
       console.error('Error creating meal log:', error)
-      return NextResponse.json({ error: 'Failed to create meal log' }, { status: 500 })
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
+      
+      // Provide more specific error messages
+      if (error.code === '42P01') {
+        return NextResponse.json({ 
+          error: 'meal_logs table does not exist. Please run the database migration.',
+          code: 'TABLE_MISSING'
+        }, { status: 500 })
+      }
+      
+      if (error.code === '42501') {
+        return NextResponse.json({ 
+          error: 'Permission denied. Please check RLS policies.',
+          code: 'RLS_ERROR'
+        }, { status: 500 })
+      }
+      
+      return NextResponse.json({ 
+        error: 'Failed to create meal log',
+        details: error.message,
+        code: error.code
+      }, { status: 500 })
     }
     
     return NextResponse.json({
