@@ -46,7 +46,7 @@ interface MealLoggingProps {
 
 interface UserPrakriti {
   prakriti: string | null
-  hasOnboarding: boolean
+  hasOnboarding: boolean | undefined // undefined = unknown (error occurred), false = confirmed no onboarding, true = confirmed has onboarding
 }
 
 export function MealLogging({ userId }: MealLoggingProps) {
@@ -72,27 +72,62 @@ export function MealLogging({ userId }: MealLoggingProps) {
       let loadedPrakriti: string | null = null
       let hasOnboardingData = false
       
-      // Try user_profiles first
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('prakriti')
-        .eq('id', userId)
+      // First, check if onboarding exists using a simple query
+      // Use select('id') first to avoid column-specific errors
+      const { data: onboardingExists, error: existsError } = await supabase
+        .from('onboarding')
+        .select('id')
+        .eq('user_id', userId)
         .maybeSingle()
-
-      if (!profileError && profile?.prakriti) {
-        loadedPrakriti = profile.prakriti
+      
+      if (existsError) {
+        // Check error type
+        if (existsError.code === 'PGRST116' || existsError.message?.includes('No rows')) {
+          // Confirmed: no onboarding exists
+          hasOnboardingData = false
+        } else {
+          // Real error (400/406) - might be RLS/schema issue
+          // User might have onboarding but we can't access it
+          // Assume they have it to avoid false "Complete Assessment" message
+          console.warn('Error checking onboarding (assuming user might have it):', existsError)
+          hasOnboardingData = true // Assume they have it
+        }
+      } else if (onboardingExists) {
+        // Onboarding exists - get prakriti data
         hasOnboardingData = true
-      } else {
-        // Try onboarding
-        const { data: onboarding, error: onboardingError } = await supabase
+        
+        // Try to get prakriti from onboarding
+        const { data: onboardingData, error: dataError } = await supabase
           .from('onboarding')
-          .select('dominant_dosha, prakriti_summary')
+          .select('dominant_dosha, prakriti_summary, prakriti')
           .eq('user_id', userId)
           .maybeSingle()
+        
+        if (!dataError && onboardingData) {
+          loadedPrakriti = onboardingData.dominant_dosha || onboardingData.prakriti_summary?.dominant || onboardingData.prakriti || null
+        } else if (dataError && dataError.code !== 'PGRST116') {
+          console.warn('Onboarding exists but error getting prakriti:', dataError)
+          // Onboarding exists but we can't get prakriti - that's OK, hasOnboardingData is already true
+        }
+      } else {
+        // No onboarding found
+        hasOnboardingData = false
+      }
+      
+      // Try user_profiles prakriti column (if migration was run)
+      if (!loadedPrakriti) {
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('prakriti')
+          .eq('id', userId)
+          .maybeSingle()
 
-        if (!onboardingError && onboarding) {
-          loadedPrakriti = onboarding.dominant_dosha || onboarding.prakriti_summary?.dominant || null
-          hasOnboardingData = true
+        // Ignore errors if column doesn't exist (400 error)
+        if (!profileError && profile?.prakriti) {
+          loadedPrakriti = profile.prakriti
+          if (!hasOnboardingData) {
+            hasOnboardingData = true // If we found prakriti in profile, user has onboarding
+          }
         }
       }
       
@@ -348,7 +383,9 @@ export function MealLogging({ userId }: MealLoggingProps) {
   }
 
   // No prakriti - show CTA to complete assessment
-  // Only show this if we're sure there's no onboarding (not just an error)
+  // Only show this if we're CERTAIN there's no onboarding (not just an error)
+  // hasOnboarding === false means we confirmed no onboarding exists
+  // hasOnboarding === undefined means we had an error and don't know - don't show this message
   if (userPrakriti.hasOnboarding === false && !userPrakriti.prakriti) {
     return (
       <div className="space-y-6">
@@ -381,7 +418,9 @@ export function MealLogging({ userId }: MealLoggingProps) {
   }
 
   // Has prakriti but no plan - show CTA to apply sample plan
-  if (!plan) {
+  // Also show if we have onboarding but couldn't determine prakriti (might be schema issue)
+  // Don't show if we're uncertain about onboarding status
+  if (!plan && (userPrakriti.prakriti || userPrakriti.hasOnboarding === true)) {
     return (
       <div className="space-y-6">
         <div>
