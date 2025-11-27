@@ -23,20 +23,36 @@ export async function POST(req: Request) {
     
     if (onboardingError) {
       console.error('Onboarding error:', onboardingError)
-      return NextResponse.json({ error: 'Failed to fetch user data' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'Failed to fetch user data',
+        details: onboardingError.message 
+      }, { status: 400 })
     }
     
     if (!onboarding) {
-      return NextResponse.json({ error: 'No onboarding data found' }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'No onboarding data found. Please complete your onboarding first.',
+        code: 'NO_ONBOARDING'
+      }, { status: 400 })
     }
     
     // Get user's prakriti
     const prakriti = onboarding.dominant_dosha || onboarding.prakriti_summary?.dominant || onboarding.prakriti
+    console.log('Prakriti lookup:', { 
+      dominant_dosha: onboarding.dominant_dosha,
+      prakriti_summary: onboarding.prakriti_summary,
+      prakriti: onboarding.prakriti,
+      resolved: prakriti
+    })
+    
     const normalizedPrakriti = normalizePrakriti(prakriti)
     
     if (!normalizedPrakriti) {
+      console.error('No valid prakriti found:', { prakriti, normalizedPrakriti })
       return NextResponse.json({ 
-        error: 'No prakriti found. Please complete your Prakriti assessment first.' 
+        error: 'No prakriti found. Please complete your Prakriti assessment first.',
+        code: 'NO_PRAKRITI',
+        details: `Found prakriti value: ${prakriti || 'null'}`
       }, { status: 400 })
     }
     
