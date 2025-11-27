@@ -109,11 +109,15 @@ export function MealLogging({ userId }: MealLoggingProps) {
   const loadUserPrakriti = async () => {
     try {
       // Try user_profiles first
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('prakriti')
         .eq('id', userId)
-        .single()
+        .maybeSingle()
+
+      if (profileError) {
+        console.warn('Error loading user_profiles prakriti:', profileError)
+      }
 
       if (profile?.prakriti) {
         setUserPrakriti({ prakriti: profile.prakriti, hasOnboarding: true })
@@ -121,11 +125,18 @@ export function MealLogging({ userId }: MealLoggingProps) {
       }
 
       // Try onboarding
-      const { data: onboarding } = await supabase
+      const { data: onboarding, error: onboardingError } = await supabase
         .from('onboarding')
         .select('dominant_dosha, prakriti_summary')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
+
+      if (onboardingError) {
+        console.warn('Error loading onboarding:', onboardingError)
+        // If we get an error, assume user might have onboarding but we can't access it
+        // Don't set hasOnboarding to false on error
+        return
+      }
 
       if (onboarding) {
         const prakriti = onboarding.dominant_dosha || onboarding.prakriti_summary?.dominant
@@ -134,17 +145,30 @@ export function MealLogging({ userId }: MealLoggingProps) {
           hasOnboarding: true 
         })
       } else {
+        // No onboarding data found
         setUserPrakriti({ prakriti: null, hasOnboarding: false })
       }
     } catch (error) {
       console.error('Error loading prakriti:', error)
-      setUserPrakriti({ prakriti: null, hasOnboarding: false })
+      // On error, don't assume no onboarding - might be a temporary issue
+      // Keep current state or set a neutral state
     }
   }
 
   const loadCurrentPlan = async () => {
     try {
       const response = await fetch(`/api/plans/current?user_id=${userId}`)
+      
+      if (!response.ok) {
+        console.error('Error loading plan - response not ok:', response.status, response.statusText)
+        // If 500 error, might be schema issue - don't treat as "no plan"
+        if (response.status === 500) {
+          console.warn('Server error loading plan - might be schema issue')
+        }
+        setPlan(null)
+        return
+      }
+      
       const data = await response.json()
       
       if (data.plan) {
@@ -166,11 +190,16 @@ export function MealLogging({ userId }: MealLoggingProps) {
 
   const loadAllergies = async () => {
     try {
-      const { data: onboarding } = await supabase
+      const { data: onboarding, error } = await supabase
         .from('onboarding')
         .select('investigation')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
+
+      if (error) {
+        console.warn('Error loading allergies:', error)
+        return
+      }
 
       if (onboarding?.investigation?.medical_history?.allergies) {
         const allergyText = onboarding.investigation.medical_history.allergies
@@ -334,7 +363,8 @@ export function MealLogging({ userId }: MealLoggingProps) {
   }
 
   // No prakriti - show CTA to complete assessment
-  if (!userPrakriti.hasOnboarding || !userPrakriti.prakriti) {
+  // Only show this if we're sure there's no onboarding (not just an error)
+  if (userPrakriti.hasOnboarding === false && !userPrakriti.prakriti) {
     return (
       <div className="space-y-6">
         <div>

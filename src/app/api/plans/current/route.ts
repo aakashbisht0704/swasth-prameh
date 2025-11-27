@@ -16,18 +16,40 @@ export async function GET(req: Request) {
     }
     
     // Fetch the active plan for the user
-    const { data: plan, error } = await supabase
+    // Try with is_active first, fallback to just latest plan if column doesn't exist
+    let { data: plan, error } = await supabase
       .from('plans')
       .select('*')
       .eq('user_id', user_id)
-      .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
     
+    // If error suggests column doesn't exist, try without is_active filter
+    if (error && (error.message?.includes('is_active') || error.code === '42703')) {
+      console.warn('is_active column might not exist, trying without filter:', error)
+      const result = await supabase
+        .from('plans')
+        .select('*')
+        .eq('user_id', user_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      plan = result.data
+      error = result.error
+    }
+    
     if (error) {
       console.error('Error fetching current plan:', error)
-      return NextResponse.json({ error: 'Failed to fetch plan' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Failed to fetch plan',
+        details: error.message 
+      }, { status: 500 })
+    }
+    
+    // Filter by is_active if the column exists
+    if (plan && 'is_active' in plan && plan.is_active === false) {
+      plan = null
     }
     
     if (!plan) {
