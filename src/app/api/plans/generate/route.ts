@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { normalizePrakriti, getAllowedItemsPrompt, validateMealPlan, getCanonicalPlan } from '@/lib/meal-plan-utils'
+import { normalizePrakriti, getAllowedItemsPrompt, validateMealPlan } from '@/lib/meal-plan-utils'
+import { generate15DayPlan, getCanonicalPlanForPrakriti } from '@/lib/plan-generator'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -111,14 +112,53 @@ export async function POST(req: Request) {
       }
       
       // Validate the generated plan against canonical items
-      const generatedPlan = data.plan || data.plan_json?.plan || []
-      const validation = validateMealPlan(generatedPlan, normalizedPrakriti)
+      let generatedPlan = data.plan || data.plan_json?.plan || []
       
-      if (!validation.valid) {
-        console.error('Generated plan contains invalid items:', validation.invalidItems)
-        // Log but don't fail - we'll sanitize instead
-        // Optionally, you could reject the plan here
+      // Get canonical plan as fallback
+      const canonicalPlan = getCanonicalPlanForPrakriti(normalizedPrakriti)
+      
+      // If LLM didn't generate a valid plan, fall back to canonical plan
+      if (!Array.isArray(generatedPlan) || generatedPlan.length === 0) {
+        console.warn('LLM did not generate valid plan, using canonical plan')
+        if (canonicalPlan) {
+          generatedPlan = generate15DayPlan(canonicalPlan)
+        }
+      } else {
+        // Validate and sanitize the generated plan
+        const validation = validateMealPlan(generatedPlan, normalizedPrakriti)
+        
+        if (!validation.valid) {
+          console.error('Generated plan contains invalid items:', validation.invalidItems)
+          // If too many invalid items, fall back to canonical plan
+          if (validation.invalidItems.length > generatedPlan.length * 0.3) {
+            console.warn('Too many invalid items, falling back to canonical plan')
+            if (canonicalPlan) {
+              generatedPlan = generate15DayPlan(canonicalPlan)
+            }
+          }
+        }
+        
+        // Ensure plan has exactly 15 days
+        if (generatedPlan.length < 15) {
+          if (canonicalPlan) {
+            generatedPlan = generate15DayPlan(canonicalPlan)
+          } else {
+            // Pad with last day if no canonical plan available
+            const lastDay = generatedPlan[generatedPlan.length - 1]
+            while (generatedPlan.length < 15) {
+              generatedPlan.push({
+                ...lastDay,
+                day: `DAY_${generatedPlan.length + 1}`
+              })
+            }
+          }
+        } else if (generatedPlan.length > 15) {
+          generatedPlan = generatedPlan.slice(0, 15)
+        }
       }
+      
+      // Final validation
+      const finalValidation = validateMealPlan(generatedPlan, normalizedPrakriti)
       
       // Deactivate existing active plans
       await supabase
@@ -159,7 +199,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ...data,
         plan_id: savedPlan.id,
-        validation_warnings: validation.invalidItems.length > 0 ? validation.invalidItems : undefined
+        validation_warnings: finalValidation.invalidItems.length > 0 ? finalValidation.invalidItems : undefined
       })
     } catch (fetchError: any) {
       // Handle SSL/connection errors

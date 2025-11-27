@@ -21,56 +21,56 @@ export const samplePlans: CanonicalPlans = {
       "day": "MONDAY",
       "breakfast": "Moong dal chila with ginger tea",
       "12pm": "Apple",
-      "lunch": "2 Barley roti + Ridge gourd curry (tori) + Moong dal soup",
+      "lunch": "2 Barley roti + ridge gourd curry ( tori) + moong dal soup",
       "6pm": "Pomegranate",
-      "dinner": "Bottle gourd soup (lauki) + 2 roti"
+      "dinner": "Bottle gourd soup (lauki) +2 roti"
     },
     {
       "day": "TUESDAY",
       "breakfast": "Besan chila with coriander chutney",
       "12pm": "Papaya",
-      "lunch": "Bajra roti + Bitter gourd sabji (karela) + Masoor dal",
-      "6pm": "Amla juice",
-      "dinner": "Ridge gourd curry + Moong dal + 2 rotis"
+      "lunch": "Bajra roti + bitter gourd sabji ( karela)+ masoor dal",
+      "6pm": "Alma juice",
+      "dinner": "Ridge gourd curry+ moong daal + 2 rotis"
     },
     {
       "day": "WEDNESDAY",
       "breakfast": "Light poha with peas",
       "12pm": "Orange",
-      "lunch": "Old red rice + Lauki sabji + Masoor dal",
-      "6pm": "Jamun (if in season)",
+      "lunch": "Old red rice + lauki sabji + masoor daal",
+      "6pm": "Jamun( if in season)",
       "dinner": "Ash gourd + 2 rotis"
     },
     {
       "day": "THURSDAY",
       "breakfast": "Oats chilla",
       "12pm": "Guava",
-      "lunch": "Jowar roti + Ivy gourd curry + Sprouted lentil salad",
+      "lunch": "Jowar roti + ivy gourd curry + sprouted lentil salad",
       "6pm": "Ginger-cinnamon tea",
-      "dinner": "Moong dal + 2 rotis"
+      "dinner": "Moong daal + 2 rotis"
     },
     {
       "day": "FRIDAY",
       "breakfast": "Ragi upma + Coriander chutney",
       "12pm": "Guava",
-      "lunch": "Barley rotis + Ash gourd curry + Toor dal",
+      "lunch": "Barley rotis + ash gourd curry + toor dal",
       "6pm": "Warm gudmar tea",
-      "dinner": "Black gram dal + Ragi rotis"
+      "dinner": "Black gram daal + ragi rotis"
     },
     {
       "day": "SATURDAY",
       "breakfast": "Moong dal dosa + Methi chutney",
       "12pm": "Apple",
       "lunch": "Rajma + Old red rice",
-      "6pm": "Ginger cinnamon tea",
+      "6pm": "Ginger cinnamon tra",
       "dinner": "Tindora sabji + Roti"
     },
     {
       "day": "SUNDAY",
-      "breakfast": "Daliya / Scrambled eggs with black pepper",
+      "breakfast": " Daliya / scrambled eggs with black pepper",
       "12pm": "Sweet lime",
-      "lunch": "Jowar roti + Bottle gourd curry + Masoor dal",
-      "6pm": "Nuts (almonds, walnuts)",
+      "lunch": "Jowar roti+ bottle gourd curry + masoor daal",
+      "6pm": "nuts almonds walnuts",
       "dinner": "Spinach curry + Roti"
     }
   ],
@@ -81,7 +81,7 @@ export const samplePlans: CanonicalPlans = {
       "12pm": "Papaya",
       "lunch": "Brown rice + Moong dal",
       "6pm": "Coconut water",
-      "dinner": "Ridge gourd (tori) sabji + 2 rotis"
+      "dinner": "Ridge gourd ( tori ) sabji + 2 rotis"
     },
     {
       "day": "TUESDAY",
@@ -103,15 +103,15 @@ export const samplePlans: CanonicalPlans = {
       "day": "THURSDAY",
       "breakfast": "Lauki prantha",
       "12pm": "Watermelon",
-      "lunch": "Rotis + Toor dal + Ash gourd curry",
+      "lunch": "Rotis + toor daal + ashgourd curry",
       "6pm": "Coconut water",
-      "dinner": "Moong dal + Snake gourd sabji + Rotis"
+      "dinner": "Moong daal + snake gourd sabji + rotis"
     },
     {
       "day": "FRIDAY",
       "breakfast": "Poha with chutney",
       "12pm": "Pomegranate",
-      "lunch": "Ragi chapati + Ridge gourd curry + Horse gram soup",
+      "lunch": "Ragi chapati + ridge gourd curry + horse gram soup",
       "6pm": "Amla juice",
       "dinner": "Barley khichdi + Pumpkin curry"
     },
@@ -119,7 +119,7 @@ export const samplePlans: CanonicalPlans = {
       "day": "SATURDAY",
       "breakfast": "Oats chilla with coriander chutney",
       "12pm": "Apple",
-      "lunch": "Brown rice + Ivy gourd sabji + Moong dal",
+      "lunch": "Brown rice + ivy gourd sabji + moong dal",
       "6pm": "Coconut water",
       "dinner": "Bottle gourd curry + Chapatis"
     },
@@ -127,9 +127,9 @@ export const samplePlans: CanonicalPlans = {
       "day": "SUNDAY",
       "breakfast": "Ragi daliya with raisins",
       "12pm": "Sweet lime slices",
-      "lunch": "Red rice + Spinach curry + Chana dal",
+      "lunch": "Red rice + spinach curry + chana dal",
       "6pm": "",
-      "dinner": "Moong dal + Ash gourd curry + Chapatis"
+      "dinner": "Moong daal + ash gourd curry + chapatis"
     }
   ],
   "vataja": [
@@ -145,7 +145,7 @@ export const samplePlans: CanonicalPlans = {
       "day": "TUESDAY",
       "breakfast": "Poha with cumin",
       "12pm": "Dates",
-      "lunch": "Brown rice + Pumpkin curry + Masoor dal",
+      "lunch": "Brown rice + pumpkin curry + masoor dal",
       "6pm": "Warm ginger tea",
       "dinner": "Chapati + Spinach sabji"
     },
@@ -153,23 +153,23 @@ export const samplePlans: CanonicalPlans = {
       "day": "WEDNESDAY",
       "breakfast": "Ragi chilla",
       "12pm": "Pomegranate",
-      "lunch": "Jowar roti + Lauki curry + Chana dal",
+      "lunch": "Jowar roti + lauki curry + chana daal",
       "6pm": "Turmeric milk",
-      "dinner": "Moong dal khichdi with ghee"
+      "dinner": "Moong daal khichdi with ghee"
     },
     {
       "day": "THURSDAY",
       "breakfast": "Oats chilla",
       "12pm": "Guava",
-      "lunch": "Wheat roti + Urad dal (soft)",
+      "lunch": "Wheat roti  + urad dal (soft)",
       "6pm": "Herbal tea",
       "dinner": "Rice + Ash gourd curry"
     },
     {
       "day": "FRIDAY",
       "breakfast": "Daliya with ghee",
-      "12pm": "Black grapes (soaked)",
-      "lunch": "Makai roti + Toor dal",
+      "12pm": "Black grapes ( soaked )",
+      "lunch": "Makai roti + toor daal",
       "6pm": "Warm milk",
       "dinner": "Spinach curry with chapati"
     },
@@ -177,15 +177,15 @@ export const samplePlans: CanonicalPlans = {
       "day": "SATURDAY",
       "breakfast": "Poha with cumin",
       "12pm": "Jamun",
-      "lunch": "Bajra roti + Ivy gourd curry",
-      "6pm": "Fox nuts",
+      "lunch": "Bajra roti + ivy gourd curry",
+      "6pm": "Fox nuts ",
       "dinner": "Bottle gourd curry + Chapati"
     },
     {
       "day": "SUNDAY",
       "breakfast": "Ragi upma with ghee",
       "12pm": "Apple",
-      "lunch": "Wheat chapati + Lauki leaves curry + Soft dal",
+      "lunch": "Wheat chapati + lauki leaves curry + soft dal",
       "6pm": "Ginger tea",
       "dinner": "Foxtail millets + Spinach curry"
     }

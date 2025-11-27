@@ -43,7 +43,7 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
     const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: SYSTEM_PROMPT_PLAN_GENERATION + '\n\nOutput STRICT JSON only, with schema: {"summary": string, "plan": [{"day": number, "morning": string, "breakfast": string, "lunch": string, "dinner": string, "evening": string}], "markdown_table": string}. IMPORTANT: The "breakfast", "lunch", and "dinner" fields must be separate strings. Do NOT combine them into a single "meals" field. The markdown_table should be a formatted table. Do not include any extra text.'
+        content: SYSTEM_PROMPT_PLAN_GENERATION + '\n\nCRITICAL: Generate EXACTLY 15 days. Use ONLY the meal items provided in the context. Output STRICT JSON only, with schema: {"summary": string, "plan": [{"day": string, "breakfast": string, "12pm": string, "lunch": string, "6pm": string, "dinner": string}], "markdown_table": string}. The plan array MUST have exactly 15 items. Use ONLY meal items from the allowed_meal_items list in the context. Do not invent or modify items. The markdown_table should be a formatted table. Do not include any extra text.'
       },
       { role: 'user', content: JSON.stringify(context) }
     ]
@@ -99,14 +99,31 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
       if (!parsed || !Array.isArray(parsed.plan) || parsed.plan.length === 0) {
         const summary = parsed?.summary || '15-day lifestyle plan based on your profile.'
         const plan = Array.from({ length: 15 }).map((_, i) => ({
-          day: i + 1,
-          morning: '10 min breathwork + gentle stretching',
+          day: `DAY_${i + 1}`,
           breakfast: 'Warm, balanced breakfast aligned to dosha',
+          '12pm': 'Fruit snack',
           lunch: 'Balanced, warm, low-sugar lunch',
-          dinner: 'Light, early dinner aligned to dosha',
-          evening: '20 min walk; 5 min mindfulness; regular sleep time'
+          '6pm': 'Evening snack',
+          dinner: 'Light, early dinner aligned to dosha'
         }))
         parsed = { summary, plan }
+      }
+      
+      // Ensure plan has exactly 15 days
+      if (parsed.plan && Array.isArray(parsed.plan)) {
+        if (parsed.plan.length < 15) {
+          // Repeat the last day to fill up to 15
+          const lastDay = parsed.plan[parsed.plan.length - 1]
+          while (parsed.plan.length < 15) {
+            parsed.plan.push({
+              ...lastDay,
+              day: `DAY_${parsed.plan.length + 1}`
+            })
+          }
+        } else if (parsed.plan.length > 15) {
+          // Trim to 15 days
+          parsed.plan = parsed.plan.slice(0, 15)
+        }
       }
     }
 

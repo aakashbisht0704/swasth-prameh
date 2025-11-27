@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { samplePlans } from '@/lib/canonical-plans'
+import { generate15DayPlan } from '@/lib/plan-generator'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -90,10 +91,13 @@ export async function POST(req: Request) {
       .eq('user_id', user_id)
       .eq('is_active', true)
     
-    // Calculate dates (7-day plan starting today)
+    // Generate 15-day plan from 7-day canonical plan
+    const fifteenDayPlan = generate15DayPlan(canonicalPlan)
+    
+    // Calculate dates (15-day plan starting today)
     const startDate = new Date()
     const endDate = new Date(startDate)
-    endDate.setDate(endDate.getDate() + 6) // 7 days total
+    endDate.setDate(endDate.getDate() + 14) // 15 days total
     
     // Create the plan record
     const { data: plan, error: planError } = await supabase
@@ -105,9 +109,9 @@ export async function POST(req: Request) {
         start_date: startDate.toISOString().split('T')[0],
         end_date: endDate.toISOString().split('T')[0],
         is_active: true,
-        payload: canonicalPlan,
-        plan_json: { plan: canonicalPlan }, // Backward compatibility
-        summary: `7-day ${normalizedPrakriti.charAt(0).toUpperCase() + normalizedPrakriti.slice(1)} sample plan`
+        payload: fifteenDayPlan,
+        plan_json: { plan: fifteenDayPlan }, // Backward compatibility
+        summary: `15-day ${normalizedPrakriti.charAt(0).toUpperCase() + normalizedPrakriti.slice(1)} sample plan`
       })
       .select()
       .single()
