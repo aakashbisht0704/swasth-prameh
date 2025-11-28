@@ -78,13 +78,11 @@ export function Navbar() {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) {
-        console.error('Sign out error:', error)
         alert('Error signing out: ' + error.message)
       } else {
         window.location.href = '/auth'
       }
     } catch (error) {
-      console.error('Sign out error:', error)
       alert('Error signing out')
     }
   }

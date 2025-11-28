@@ -56,7 +56,6 @@ export async function GET(req: NextRequest) {
     const { data: chats, error, count } = await query
 
     if (error) {
-      console.error('Error fetching unassigned chats:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -68,7 +67,6 @@ export async function GET(req: NextRequest) {
       has_more: (count || 0) > page * pageSize,
     })
   } catch (error: any) {
-    console.error('Error in unassigned chats:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

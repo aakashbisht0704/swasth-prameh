@@ -130,15 +130,6 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
     // Persist to Supabase (non-fatal)
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
-        console.log('Attempting to persist plan to Supabase...')
-        console.log('URL:', SUPABASE_URL)
-        console.log('Plan data:', JSON.stringify({
-          user_id,
-          diagnosis_id: diagnosis_id || null,
-          plan_json: parsed,
-          summary: parsed.summary || ''
-        }))
-        
         const persistRes = await fetch(`${SUPABASE_URL}/rest/v1/plans`, {
           method: 'POST',
           headers: {
@@ -156,26 +147,17 @@ app.post('/generate-plan', async (req: Request, res: Response) => {
         })
         
         const persistData = await persistRes.json()
-        console.log('Persist response status:', persistRes.status)
-        console.log('Persist response data:', persistData)
         
         if (!persistRes.ok) {
-          console.error('Failed to persist plan:', persistData)
-        } else {
-          console.log('Plan persisted successfully!')
+          // Silently handle persistence errors
         }
       } catch (persistErr) {
-        console.error('Persist plan error:', persistErr)
+        // Silently handle persistence errors
       }
-    } else {
-      console.error('Cannot persist plan: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-      console.log('SUPABASE_URL:', SUPABASE_URL)
-      console.log('SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET')
     }
 
     return res.json(parsed)
   } catch (e) {
-    console.error('LLM /generate-plan error:', e)
     return res.status(500).json({ error: String(e) })
   }
 })
@@ -219,14 +201,13 @@ app.post('/chat', async (req: Request, res: Response) => {
     const text = completion?.choices?.[0]?.message?.content || ''
     return res.json({ text })
   } catch (e) {
-    console.error('LLM /chat error:', e)
     return res.status(500).json({ error: String(e) })
   }
 })
 
 const port = process.env.PORT || 8002
 app.listen(port, () => {
-  console.log(`LLM server listening on :${port}`)
+  // Server started
 })
 
 

@@ -82,13 +82,11 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Error saving investigation:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, data })
   } catch (error: any) {
-    console.error('Error in investigation save:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
@@ -123,13 +121,11 @@ export async function GET(req: NextRequest) {
       .maybeSingle()
 
     if (error) {
-      console.error('Error fetching investigation:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ investigation: data?.investigation || null })
   } catch (error: any) {
-    console.error('Error in investigation get:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

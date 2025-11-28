@@ -31,7 +31,6 @@ export function AuthForm() {
       const redirectUrl = await getRedirectUrl(user.id);
       router.push(redirectUrl);
     } catch (error: any) {
-      console.error('Error in post-auth redirect:', error);
       // Fallback to onboarding page
       router.push('/onboarding');
     }
@@ -68,9 +67,6 @@ export function AuthForm() {
           // Always use the current origin for email redirects to ensure consistency
           // This way, emails sent from localhost redirect to localhost, and emails from production redirect to production
           const emailRedirectUrl = `${location.origin}/auth/callback`
-          
-          console.log('Sign up - Email redirect URL:', emailRedirectUrl)
-          console.log('Current origin:', location.origin)
           
           const { data, error } = await supabase.auth.signUp({
             email,
@@ -128,7 +124,6 @@ export function AuthForm() {
         }
       }
     } catch (error: any) {
-      console.error('Authentication error:', error)
       toast.error(error?.message || 'An error occurred during authentication')
     } finally {
       setLoading(false)
@@ -153,19 +148,10 @@ export function AuthForm() {
         redirectUrl = `${location.origin}/auth/callback`
       }
       
-      console.log('=== Google OAuth Initiation ===')
-      console.log('OAuth redirect URL:', redirectUrl)
-      console.log('Current origin:', location.origin)
-      console.log('Current hostname:', location.hostname)
-      console.log('NEXT_PUBLIC_SITE_URL:', process.env.NEXT_PUBLIC_SITE_URL)
-      console.log('Full location:', location.href)
-      
       // Try to ensure the redirect URL is absolute and correct
       const absoluteRedirectUrl = redirectUrl.startsWith('http') 
         ? redirectUrl 
         : `${location.protocol}//${location.host}${redirectUrl}`
-      
-      console.log('Absolute redirect URL:', absoluteRedirectUrl)
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -178,11 +164,9 @@ export function AuthForm() {
         },
       })
       
-      console.log('OAuth response:', { data, error })
       if (error) throw error
       // Google OAuth will redirect to callback, which should handle onboarding/dashboard redirect
     } catch (error: any) {
-      console.error('Google sign in error:', error)
       toast.error(error?.message || 'An error occurred during Google sign in')
     }
   }

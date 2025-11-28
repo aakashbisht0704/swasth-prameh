@@ -46,7 +46,6 @@ export function useFeedback({ userId, planId, lastPlanDate }: FeedbackData) {
         setShouldShowFeedback(true)
       }
     } catch (error) {
-      console.error('Error checking feedback eligibility:', error)
     }
   }
 

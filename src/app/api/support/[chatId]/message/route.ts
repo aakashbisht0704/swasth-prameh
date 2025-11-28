@@ -44,8 +44,6 @@ export async function POST(
       .single()
 
     if (chatError) {
-      console.error('Error fetching chat:', chatError)
-      console.error('Error code:', chatError.code)
       if (chatError.code === '42P01' || chatError.message?.includes('does not exist')) {
         return NextResponse.json({ 
           error: 'Support chats table not found. Please run the database migration.',
@@ -111,7 +109,6 @@ export async function POST(
       .single()
 
     if (messageError) {
-      console.error('Error creating message:', messageError)
       return NextResponse.json({ error: messageError.message }, { status: 500 })
     }
 
@@ -153,13 +150,11 @@ export async function POST(
         p_entity_id: newMessage.id,
       })
     } catch (rpcError: any) {
-      console.warn('Failed to log activity (RPC may not exist):', rpcError.message)
       // Don't fail the request if activity logging fails
     }
 
     return NextResponse.json({ message: messageWithDetails })
   } catch (error: any) {
-    console.error('Error in create message:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

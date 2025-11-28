@@ -90,10 +90,6 @@ export async function POST(req: NextRequest) {
     // Persist to Supabase (non-fatal)
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
-        console.log('Attempting to persist plan to Supabase...')
-        console.log('URL:', SUPABASE_URL)
-        console.log('Plan data:', JSON.stringify({
-          user_id,
           diagnosis_id: diagnosis_id || null,
           plan_json: parsed,
           summary: parsed.summary || ''
@@ -116,26 +112,16 @@ export async function POST(req: NextRequest) {
         })
         
         const persistData = await persistRes.json()
-        console.log('Persist response status:', persistRes.status)
-        console.log('Persist response data:', persistData)
-        
         if (!persistRes.ok) {
-          console.error('Failed to persist plan:', persistData)
         } else {
-          console.log('Plan persisted successfully!')
         }
       } catch (persistErr) {
-        console.error('Persist plan error:', persistErr)
       }
     } else {
-      console.error('Cannot persist plan: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-      console.log('SUPABASE_URL:', SUPABASE_URL)
-      console.log('SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET')
     }
 
     return NextResponse.json(parsed)
   } catch (e) {
-    console.error('LLM /generate-plan error:', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

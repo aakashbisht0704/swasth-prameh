@@ -46,7 +46,6 @@ export function ChatsDashboard() {
         setChats(data.data || [])
       }
     } catch (error) {
-      console.error('Error fetching chats:', error)
       toast.error('Failed to load chats')
     } finally {
       setLoading(false)
@@ -63,7 +62,6 @@ export function ChatsDashboard() {
 
       setSupportAgents(data || [])
     } catch (error) {
-      console.error('Error fetching agents:', error)
     }
   }
 
@@ -89,7 +87,6 @@ export function ChatsDashboard() {
         toast.error(error.error || 'Failed to assign chat')
       }
     } catch (error) {
-      console.error('Error assigning chat:', error)
       toast.error('Failed to assign chat')
     }
   }

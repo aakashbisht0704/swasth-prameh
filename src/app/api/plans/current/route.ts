@@ -27,7 +27,6 @@ export async function GET(req: Request) {
     
     // If error suggests column doesn't exist, try without is_active filter
     if (error && (error.message?.includes('is_active') || error.code === '42703')) {
-      console.warn('is_active column might not exist, trying without filter:', error)
       const result = await supabase
         .from('plans')
         .select('*')
@@ -40,7 +39,6 @@ export async function GET(req: Request) {
     }
     
     if (error) {
-      console.error('Error fetching current plan:', error)
       return NextResponse.json({ 
         error: 'Failed to fetch plan',
         details: error.message 
@@ -72,7 +70,6 @@ export async function GET(req: Request) {
       }
     })
   } catch (e: any) {
-    console.error('Get current plan error:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
 }

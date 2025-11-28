@@ -65,7 +65,6 @@ export async function PATCH(
       .neq('sender_id', user.id) // Don't mark own messages as read
 
     if (updateError) {
-      console.error('Error marking messages as read:', updateError)
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
@@ -77,7 +76,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Error in mark read:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

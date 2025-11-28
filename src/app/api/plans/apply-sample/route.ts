@@ -34,8 +34,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
     }
     
-    console.log('Apply sample plan request for user:', user_id)
-    
     // Fetch user's prakriti from user_profiles or onboarding
     let userPrakriti: string | null = providedPrakriti || null
     
@@ -117,11 +115,8 @@ export async function POST(req: Request) {
       .single()
     
     if (planError) {
-      console.error('Error creating plan:', planError)
       return NextResponse.json({ error: 'Failed to create plan' }, { status: 500 })
     }
-    
-    console.log('Sample plan applied successfully:', plan.id)
     
     return NextResponse.json({
       success: true,
@@ -132,7 +127,6 @@ export async function POST(req: Request) {
       payload: plan.payload
     })
   } catch (e: any) {
-    console.error('Apply sample plan error:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
 }

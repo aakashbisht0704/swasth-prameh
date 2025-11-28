@@ -30,7 +30,6 @@ export function useChatSessions() {
         }
       }
     } catch (error) {
-      console.error('Error loading sessions:', error)
     }
   }, [])
 
@@ -40,7 +39,6 @@ export function useChatSessions() {
       localStorage.setItem(SESSIONS_KEY, JSON.stringify(newSessions))
       setSessions(newSessions)
     } catch (error) {
-      console.error('Error saving sessions:', error)
     }
   }, [])
 
@@ -94,7 +92,6 @@ export function useChatSessions() {
       setSessions((prevSessions) => {
         const sessionExists = prevSessions.some((s) => s.id === chatId)
         if (!sessionExists) {
-          console.warn(`Chat ${chatId} not found, creating it`)
           // If chat doesn't exist, create it
           const newChat: ChatSession = {
             id: chatId,
@@ -147,7 +144,6 @@ export function useChatSessions() {
               is_read: true,
             })
             .catch((error) => {
-              console.error('Failed to save message to database:', error)
             })
         }
       })

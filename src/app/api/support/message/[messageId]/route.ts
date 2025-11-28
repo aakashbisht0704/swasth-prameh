@@ -66,7 +66,6 @@ export async function DELETE(
       .eq('id', messageId)
 
     if (deleteError) {
-      console.error('Error deleting message:', deleteError)
       return NextResponse.json({ error: deleteError.message }, { status: 500 })
     }
 
@@ -80,7 +79,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Error in delete message:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

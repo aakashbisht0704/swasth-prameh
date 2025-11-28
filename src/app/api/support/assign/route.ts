@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (updateError) {
-      console.error('Error assigning chat:', updateError)
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
@@ -86,7 +85,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ chat })
   } catch (error: any) {
-    console.error('Error in assign chat:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

@@ -40,7 +40,6 @@ export function YogaVideoThumbnail({ videoUrl, title, className = '' }: YogaVide
         setThumbnail(dataUrl)
         setLoading(false)
       } catch (e) {
-        console.error('Error capturing thumbnail:', e)
         setError(true)
         setLoading(false)
       }
@@ -68,7 +67,6 @@ export function YogaVideoThumbnail({ videoUrl, title, className = '' }: YogaVide
     }
 
     const handleError = () => {
-      console.error('Error loading video for thumbnail')
       setError(true)
       setLoading(false)
     }

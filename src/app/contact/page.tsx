@@ -37,7 +37,6 @@ export default function ContactPage() {
       toast.success(data.message || 'Thank you for your message. We will get back to you soon.')
       setForm({ name: '', email: '', message: '' })
     } catch (error: any) {
-      console.error('Contact form error:', error)
       toast.error('Failed to submit message: ' + error.message)
     } finally {
       setLoading(false)

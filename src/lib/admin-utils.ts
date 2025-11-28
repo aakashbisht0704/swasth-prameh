@@ -17,7 +17,6 @@ export async function checkAdminRole(): Promise<boolean> {
     if (error || !user) return false
     return isAdmin(user)
   } catch (error) {
-    console.error('Error checking admin role:', error)
     return false
   }
 }
@@ -33,7 +32,6 @@ export async function checkAdminRoleServer(): Promise<boolean> {
     if (error || !user) return false
     return isAdmin(user)
   } catch (error) {
-    console.error('Error checking admin role:', error)
     return false
   }
 }
@@ -70,7 +68,6 @@ export async function getUsersWithOnboarding() {
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Error fetching users:', error)
     throw error
   }
 }
@@ -86,7 +83,6 @@ export async function getChatParticipants() {
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Error fetching chat participants:', error)
     throw error
   }
 }
@@ -105,7 +101,6 @@ export async function getUserMessages(userId: string) {
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Error fetching user messages:', error)
     throw error
   }
 }
@@ -128,7 +123,6 @@ export async function getUserDetails(userId: string) {
     if (error) throw error
     return data
   } catch (error) {
-    console.error('Error fetching user details:', error)
     throw error
   }
 }

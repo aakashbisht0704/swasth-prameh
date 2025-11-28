@@ -41,7 +41,6 @@ export function LifestyleAdvice({ lifestyle, investigation }: LifestyleAdvicePro
           setAdvice(data.advice || null) // Use fallback advice if provided
         }
       } catch (err) {
-        console.error('Error fetching lifestyle advice:', err)
         setError('Failed to load advice')
       } finally {
         setLoading(false)

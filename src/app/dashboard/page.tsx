@@ -78,7 +78,6 @@ export default function DashboardPage() {
         .single()
       setLatestPlan(planData)
     } catch (err) {
-      console.error('Error loading user data:', err)
     }
   }
 

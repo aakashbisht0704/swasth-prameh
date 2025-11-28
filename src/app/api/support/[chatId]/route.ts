@@ -41,8 +41,6 @@ export async function GET(
       .single()
 
     if (chatError) {
-      console.error('Error fetching chat:', chatError)
-      console.error('Error code:', chatError.code)
       if (chatError.code === '42P01' || chatError.message?.includes('does not exist')) {
         return NextResponse.json({ 
           error: 'Support chats table not found. Please run the database migration.',
@@ -108,7 +106,6 @@ export async function GET(
       .range((page - 1) * pageSize, page * pageSize - 1)
 
     if (messagesError) {
-      console.error('Error fetching messages:', messagesError)
       return NextResponse.json({ error: messagesError.message }, { status: 500 })
     }
 
@@ -147,7 +144,6 @@ export async function GET(
       has_more: (count || 0) > page * pageSize,
     })
   } catch (error: any) {
-    console.error('Error in get chat:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

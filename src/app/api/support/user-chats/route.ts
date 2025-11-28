@@ -45,10 +45,6 @@ export async function GET(req: NextRequest) {
     const { data: chats, error, count } = await query
 
     if (error) {
-      console.error('Error fetching chats:', error)
-      console.error('Error code:', error.code)
-      console.error('Error message:', error.message)
-      console.error('Error details:', JSON.stringify(error, null, 2))
       
       // Check if table doesn't exist
       if (error.code === '42P01' || error.message?.includes('does not exist')) {
@@ -99,7 +95,6 @@ export async function GET(req: NextRequest) {
       has_more: (count || 0) > page * pageSize,
     })
   } catch (error: any) {
-    console.error('Error in user chats:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

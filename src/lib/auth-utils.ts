@@ -25,7 +25,6 @@ export async function ensureUserExists(user: User): Promise<void> {
       }, { onConflict: 'id' })
     
     if (userError) {
-      console.error('Error upserting user:', userError.message)
       // If the error is about table not existing, provide helpful message
       if (userError.message.includes('relation "public.users" does not exist')) {
         throw new Error('Database tables not set up. Please run the database setup script in Supabase.')
@@ -41,7 +40,6 @@ export async function ensureUserExists(user: User): Promise<void> {
       .maybeSingle()
       
     if (profileFetchError) {
-      console.error('Error fetching user_profiles:', profileFetchError.message)
       if (profileFetchError.message.includes('relation "public.user_profiles" does not exist')) {
         throw new Error('Database tables not set up. Please run the database setup script in Supabase.')
       }
@@ -62,7 +60,6 @@ export async function ensureUserExists(user: User): Promise<void> {
         })
         
       if (insertError) {
-        console.error('Error inserting user_profiles:', insertError.message)
         // Try upsert instead in case of conflict
         const { error: upsertError } = await supabase
           .from('user_profiles')
@@ -95,7 +92,6 @@ export async function ensureUserExists(user: User): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('Error in ensureUserExists:', error)
     throw error
   }
 }
@@ -112,16 +108,13 @@ export async function hasCompletedOnboarding(userId: string): Promise<boolean> {
       .maybeSingle()
       
     if (error) {
-      console.error('Error checking onboarding status:', error)
       if (error.message.includes('relation "public.onboarding" does not exist')) {
-        console.warn('Onboarding table does not exist. Please run the database setup script.')
       }
       return false
     }
       
     return !!onboarding
   } catch (error) {
-    console.error('Error checking onboarding status:', error)
     return false
   }
 }
@@ -148,11 +141,9 @@ export async function markOnboardingCompleted(userId: string, fullName?: string)
       .eq('id', userId)
       
     if (error) {
-      console.error('Error updating user onboarding status:', error.message)
       throw error
     }
   } catch (error) {
-    console.error('Error in markOnboardingCompleted:', error)
     throw error
   }
 }

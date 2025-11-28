@@ -168,7 +168,6 @@ export default function AssistantPage() {
           }
         },
         (error) => {
-          console.error('Chat error:', error)
           addMessage(chatId, {
             role: 'assistant',
             content: `Sorry, I encountered an error: ${error.message || 'Unknown error'}`,
@@ -176,7 +175,6 @@ export default function AssistantPage() {
         }
       )
     } catch (error) {
-      console.error('Error sending message:', error)
       addMessage(chatId, {
         role: 'assistant',
         content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}`,

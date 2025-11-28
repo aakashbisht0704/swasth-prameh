@@ -13,8 +13,6 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { user_id } = body
     
-    console.log('Generate plan request for user:', user_id)
-    
     // Fetch user's onboarding data to build context
     const { data: onboarding, error: onboardingError } = await supabase
       .from('onboarding')
@@ -23,7 +21,6 @@ export async function POST(req: Request) {
       .single()
     
     if (onboardingError) {
-      console.error('Onboarding error:', onboardingError)
       return NextResponse.json({ 
         error: 'Failed to fetch user data',
         details: onboardingError.message 
@@ -39,17 +36,10 @@ export async function POST(req: Request) {
     
     // Get user's prakriti
     const prakriti = onboarding.dominant_dosha || onboarding.prakriti_summary?.dominant || onboarding.prakriti
-    console.log('Prakriti lookup:', { 
-      dominant_dosha: onboarding.dominant_dosha,
-      prakriti_summary: onboarding.prakriti_summary,
-      prakriti: onboarding.prakriti,
-      resolved: prakriti
-    })
     
     const normalizedPrakriti = normalizePrakriti(prakriti)
     
     if (!normalizedPrakriti) {
-      console.error('No valid prakriti found:', { prakriti, normalizedPrakriti })
       return NextResponse.json({ 
         error: 'No prakriti found. Please complete your Prakriti assessment first.',
         code: 'NO_PRAKRITI',
@@ -82,7 +72,6 @@ ABSOLUTELY FORBIDDEN:
 The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above for this specific prakriti.`
     }
     
-    console.log('Context with constraints:', { ...context, allowed_meal_items: '...' })
     
     const llmUrl = process.env.LLM_SERVER_URL || process.env.NEXT_PUBLIC_LLM_SERVER_URL
     if (!llmUrl) {
@@ -105,8 +94,6 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
       }
     }
 
-    console.log('Calling LLM service at:', `${normalizedUrl}/generate-plan`)
-
     try {
       const res = await fetch(`${normalizedUrl}/generate-plan`, {
         method: 'POST',
@@ -116,7 +103,6 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
 
       const data = await res.json()
       if (!res.ok) {
-        console.error('LLM error:', data)
         return NextResponse.json({ error: data?.error || 'LLM error' }, { status: 500 })
       }
       
@@ -128,7 +114,6 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
       
       // If LLM didn't generate a valid plan, fall back to canonical plan
       if (!Array.isArray(generatedPlan) || generatedPlan.length === 0) {
-        console.warn('LLM did not generate valid plan, using canonical plan')
         if (canonicalPlan) {
           generatedPlan = generate15DayPlan(canonicalPlan)
         }
@@ -137,20 +122,13 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
         const validation = validateMealPlan(generatedPlan, normalizedPrakriti)
         
         if (!validation.valid) {
-          console.error('Generated plan validation failed:', {
-            invalidItems: validation.invalidItems,
-            crossContamination: validation.crossContamination
-          })
-          
           // CRITICAL: If ANY cross-contamination detected, immediately fall back to canonical plan
           if (validation.crossContamination.length > 0) {
-            console.error('CROSS-CONTAMINATION DETECTED: Plan contains items from wrong prakriti!', validation.crossContamination)
             if (canonicalPlan) {
               generatedPlan = generate15DayPlan(canonicalPlan)
             }
           } else if (validation.invalidItems.length > generatedPlan.length * 0.3) {
             // If too many invalid items (but no cross-contamination), fall back to canonical plan
-            console.warn('Too many invalid items, falling back to canonical plan')
             if (canonicalPlan) {
               generatedPlan = generate15DayPlan(canonicalPlan)
             }
@@ -178,14 +156,6 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
       
       // Final validation (after any sanitization)
       const finalValidation = validateMealPlan(generatedPlan, normalizedPrakriti)
-      
-      // Log final validation results
-      if (!finalValidation.valid) {
-        console.warn('Final plan validation warnings:', {
-          invalidItems: finalValidation.invalidItems,
-          crossContamination: finalValidation.crossContamination
-        })
-      }
       
       // Deactivate existing active plans
       await supabase
@@ -217,11 +187,8 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
         .single()
       
       if (saveError) {
-        console.error('Error saving plan:', saveError)
         return NextResponse.json({ error: 'Failed to save plan' }, { status: 500 })
       }
-      
-      console.log('Plan generated and saved successfully:', savedPlan.id)
       
       return NextResponse.json({
         ...data,
@@ -232,7 +199,6 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
     } catch (fetchError: any) {
       // Handle SSL/connection errors
       if (fetchError.message?.includes('SSL') || fetchError.code === 'ERR_SSL_WRONG_VERSION_NUMBER') {
-        console.error('SSL/Connection error. Check LLM_SERVER_URL protocol (http vs https):', normalizedUrl)
         return NextResponse.json({ 
           error: `Connection error: ${fetchError.message}. Please check LLM_SERVER_URL is using the correct protocol (http:// for localhost, https:// for production).` 
         }, { status: 500 })
@@ -240,7 +206,6 @@ The user's prakriti is ${normalizedPrakriti}. Use ONLY the items listed above fo
       throw fetchError
     }
   } catch (e: any) {
-    console.error('Generate plan error:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
 }

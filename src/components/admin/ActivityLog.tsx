@@ -32,7 +32,6 @@ export function ActivityLog() {
       if (error) throw error
       setActivities(data || [])
     } catch (error) {
-      console.error('Error fetching activities:', error)
       toast.error('Failed to load activity log')
     } finally {
       setLoading(false)

@@ -27,7 +27,6 @@ export function YogaMinutes({ userId }: YogaMinutesProps) {
       setTotalMinutes(total)
       setWeeklyMinutes(weekly)
     } catch (error) {
-      console.error('Error loading yoga minutes:', error)
     } finally {
       setLoading(false)
     }

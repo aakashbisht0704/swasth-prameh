@@ -68,14 +68,6 @@ export async function POST(req: Request) {
       .single()
     
     if (error) {
-      console.error('Error creating meal log:', error)
-      console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      })
-      
       // Provide more specific error messages
       if (error.code === '42P01') {
         return NextResponse.json({ 
@@ -103,7 +95,6 @@ export async function POST(req: Request) {
       meal_log: mealLog
     })
   } catch (e: any) {
-    console.error('Log meal error:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
 }

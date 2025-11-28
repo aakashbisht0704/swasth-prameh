@@ -74,7 +74,6 @@ Provide a concise 2-3 sentence Ayurvedic lifestyle recommendation focusing on th
     
     return NextResponse.json({ advice })
   } catch (e: any) {
-    console.error('Lifestyle advice error:', e)
     return NextResponse.json({ 
       error: 'Failed to generate advice',
       advice: 'Please ensure your lifestyle information is complete for personalized recommendations.'

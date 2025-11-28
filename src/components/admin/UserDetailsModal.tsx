@@ -81,7 +81,6 @@ export function UserDetailsModal({ user, isOpen, onClose }: UserDetailsModalProp
       const data = await getUserMessages(user.id);
       setMessages(data);
     } catch (error) {
-      console.error('Error fetching messages:', error);
     } finally {
       setLoading(false);
     }

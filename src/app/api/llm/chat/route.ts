@@ -54,7 +54,6 @@ export async function POST(req: NextRequest) {
     const text = completion?.choices?.[0]?.message?.content || ''
     return NextResponse.json({ text })
   } catch (e) {
-    console.error('LLM /chat error:', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

@@ -68,7 +68,6 @@ export function ChatBubble() {
         refreshChats()
       }
     } catch (error) {
-      console.error('Error creating chat:', error)
       toast.error('Failed to create chat')
     }
   }

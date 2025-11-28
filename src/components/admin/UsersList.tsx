@@ -39,7 +39,6 @@ export function UsersList() {
       if (error) throw error
       setUsers(data || [])
     } catch (error) {
-      console.error('Error fetching users:', error)
       toast.error('Failed to load users')
     } finally {
       setLoading(false)
@@ -58,7 +57,6 @@ export function UsersList() {
       toast.success('User role updated')
       fetchUsers()
     } catch (error) {
-      console.error('Error updating role:', error)
       toast.error('Failed to update role')
     }
   }

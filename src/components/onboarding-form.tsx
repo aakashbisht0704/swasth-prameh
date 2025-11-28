@@ -102,7 +102,6 @@ export function OnboardingForm() {
     if (!error) {
       router.push('/dashboard');
     } else {
-      console.error('Onboarding save error:', error);
       alert('Failed to save onboarding: ' + error.message);
     }
   };

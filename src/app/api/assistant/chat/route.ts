@@ -6,12 +6,10 @@ import { normalizePrakriti, getAllowedItemsPrompt } from '@/lib/meal-plan-utils'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    console.log('Assistant chat request:', { messageCount: body.messages?.length })
     
     // Check if the last message is relevant
     const lastMessage = body.messages?.[body.messages.length - 1]?.content
     if (lastMessage && !isRelevantQuery(lastMessage)) {
-      console.log('Query not relevant, returning refusal message')
       return NextResponse.json({ text: "Please ask questions relevant to diabetes and ayurveda" })
     }
     
@@ -19,11 +17,8 @@ export async function POST(req: Request) {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      console.error('Auth error:', authError)
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-
-    console.log('User authenticated:', user.id)
 
     // Fetch latest onboarding, diagnosis, and plan
     const [{ data: onboarding, error: onboardingError }, { data: diagnosis, error: diagnosisError }, { data: plans, error: plansError }] = await Promise.all([
@@ -31,10 +26,6 @@ export async function POST(req: Request) {
       supabase.from('diagnosis').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       supabase.from('plans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1)
     ])
-
-    if (onboardingError) console.error('Onboarding fetch error:', onboardingError)
-    if (diagnosisError) console.error('Diagnosis fetch error:', diagnosisError)
-    if (plansError) console.error('Plans fetch error:', plansError)
 
     // Get user's prakriti for meal constraints
     const prakriti = onboarding?.dominant_dosha || onboarding?.prakriti_summary?.dominant || onboarding?.prakriti
@@ -55,11 +46,9 @@ export async function POST(req: Request) {
         }
       } : {})
     }
-    console.log('Context loaded:', { hasOnboarding: !!onboarding, hasDiagnosis: !!diagnosis, hasPlan: !!plans?.[0], hasMealConstraints: !!allowedMealItems })
 
     const llmUrl = process.env.LLM_SERVER_URL || process.env.NEXT_PUBLIC_LLM_SERVER_URL
     if (!llmUrl) {
-      console.error('LLM_SERVER_URL not set')
       return NextResponse.json({ error: 'LLM_SERVER_URL not set' }, { status: 500 })
     }
 
@@ -79,8 +68,6 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log('Calling LLM at:', `${normalizedUrl}/chat`)
-
     try {
       const res = await fetch(`${normalizedUrl}/chat`, {
         method: 'POST', 
@@ -88,11 +75,8 @@ export async function POST(req: Request) {
         body: JSON.stringify({ user_id: user.id, messages: body.messages, context })
       })
       
-      console.log('LLM response status:', res.status, res.statusText)
-      
       if (!res.ok) {
         const errorText = await res.text()
-        console.error('LLM error response:', errorText)
         let errorData: any = null
         try {
           errorData = JSON.parse(errorText)
@@ -105,10 +89,8 @@ export async function POST(req: Request) {
       }
       
       const data = await res.json()
-      console.log('LLM response data:', data?.text ? data.text.substring(0, 100) : data)
       
       if (!data || (!data.text && !data.content)) {
-        console.error('LLM returned empty or invalid response:', data)
         return NextResponse.json({ 
           error: 'LLM returned empty response' 
         }, { status: 500 })
@@ -116,10 +98,8 @@ export async function POST(req: Request) {
       
       return NextResponse.json(data)
     } catch (fetchError: any) {
-      console.error('Fetch error:', fetchError)
       // Handle SSL/connection errors
       if (fetchError.message?.includes('SSL') || fetchError.code === 'ERR_SSL_WRONG_VERSION_NUMBER') {
-        console.error('SSL/Connection error. Check LLM_SERVER_URL protocol (http vs https):', normalizedUrl)
         return NextResponse.json({ 
           error: `Connection error: ${fetchError.message}. Please check LLM_SERVER_URL is using the correct protocol (http:// for localhost, https:// for production).` 
         }, { status: 500 })
@@ -133,7 +113,6 @@ export async function POST(req: Request) {
       throw fetchError
     }
   } catch (e: any) {
-    console.error('Unexpected error in assistant chat:', e)
     return NextResponse.json({ error: e?.message || 'Unexpected error' }, { status: 500 })
   }
 }

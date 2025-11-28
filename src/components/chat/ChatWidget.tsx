@@ -56,7 +56,6 @@ export function ChatWidget({ userId, isAdmin = false, adminId }: ChatWidgetProps
         setUnreadCount(unread);
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
     }
   };
 
@@ -81,7 +80,6 @@ export function ChatWidget({ userId, isAdmin = false, adminId }: ChatWidgetProps
       setNewMessage('');
       await fetchMessages(); // Refresh messages
     } catch (error) {
-      console.error('Error sending message:', error);
       alert('Failed to send message. Please try again.');
     } finally {
       setLoading(false);
@@ -107,7 +105,6 @@ export function ChatWidget({ userId, isAdmin = false, adminId }: ChatWidgetProps
         setUnreadCount(0);
       }
     } catch (error) {
-      console.error('Error marking messages as read:', error);
     }
   };
 

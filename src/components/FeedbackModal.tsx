@@ -47,7 +47,6 @@ export function FeedbackModal({ isOpen, onClose, userId, planId, onFeedbackSubmi
       onClose()
       onFeedbackSubmitted?.()
     } catch (error: any) {
-      console.error('Error submitting feedback:', error)
       toast.error('Failed to submit feedback: ' + error.message)
     } finally {
       setLoading(false)

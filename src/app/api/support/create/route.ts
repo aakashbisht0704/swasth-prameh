@@ -59,7 +59,6 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (chatError) {
-      console.error('Error creating chat:', chatError)
       return NextResponse.json({ error: chatError.message }, { status: 500 })
     }
 
@@ -75,7 +74,6 @@ export async function POST(req: NextRequest) {
         })
 
       if (messageError) {
-        console.error('Error creating initial message:', messageError)
         // Don't fail the request, chat is created
       }
     }
@@ -90,7 +88,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ chat })
   } catch (error: any) {
-    console.error('Error in create chat:', error)
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }

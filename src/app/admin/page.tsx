@@ -38,7 +38,6 @@ export default function AdminPage() {
 
         setIsAdmin(true)
       } catch (error) {
-        console.error('Error checking admin:', error)
         router.push('/dashboard')
       } finally {
         setLoading(false)

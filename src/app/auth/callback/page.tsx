@@ -36,7 +36,6 @@ function AuthCallbackContent() {
         const errorDescription = searchParams.get("error_description");
         
         if (error) {
-          console.error("OAuth callback error:", error, errorDescription);
           setConfirmationStatus("error");
           setStatusMessage("Authentication Error");
           setErrorMessage(errorDescription || error);
@@ -62,8 +61,6 @@ function AuthCallbackContent() {
         if (cancelled) return;
 
         if (sessionError) {
-          console.error("Session error:", sessionError.message);
-          
           // Check if it's an expired token
           if (sessionError.message.includes("expired") || sessionError.message.includes("invalid") || sessionError.message.includes("token")) {
             setConfirmationStatus("expired");
@@ -87,7 +84,6 @@ function AuthCallbackContent() {
 
         if (session) {
           const user = session.user;
-          console.log("Session found for user:", user.email);
           setUserEmail(user.email || "");
           
           // Check if email was just confirmed
@@ -108,8 +104,6 @@ function AuthCallbackContent() {
           
           // Get appropriate redirect URL
           const redirectUrl = await getRedirectUrl(user.id);
-          console.log("Redirecting to:", redirectUrl);
-          
           // Show success message for 2 seconds before redirecting
           redirectTimeout = setTimeout(() => {
             router.replace(redirectUrl);
@@ -121,9 +115,6 @@ function AuthCallbackContent() {
           
           authListener = supabase.auth.onAuthStateChange(async (event, session) => {
             if (cancelled) return;
-            
-            console.log("Auth state changed:", event, session?.user?.email);
-            
             if (event === "SIGNED_IN" && session) {
               const user = session.user;
               setUserEmail(user.email || "");
@@ -139,13 +130,10 @@ function AuthCallbackContent() {
               try {
                 await ensureUserExists(user);
                 const redirectUrl = await getRedirectUrl(user.id);
-                console.log("Redirecting to:", redirectUrl);
-                
                 redirectTimeout = setTimeout(() => {
                   router.replace(redirectUrl);
                 }, 2000);
               } catch (error: any) {
-                console.error("Error in auth state change:", error);
                 setConfirmationStatus("error");
                 setStatusMessage("Setup Error");
                 setErrorMessage(error.message || "Failed to set up your account");
@@ -184,7 +172,6 @@ function AuthCallbackContent() {
                   router.replace(redirectUrl);
                 }, 2000);
               } catch (error: any) {
-                console.error("Error in retry:", error);
                 setConfirmationStatus("error");
                 setStatusMessage("Setup Error");
                 setErrorMessage(error.message || "Failed to set up your account");
@@ -212,7 +199,6 @@ function AuthCallbackContent() {
           }, 5000);
         }
       } catch (error: any) {
-        console.error("Callback error:", error);
         setConfirmationStatus("error");
         setStatusMessage("Error");
         setErrorMessage(error.message || "Authentication failed");

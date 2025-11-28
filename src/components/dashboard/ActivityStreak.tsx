@@ -92,7 +92,6 @@ export function ActivityStreak({ userId }: ActivityStreakProps) {
         currentStreak: streak,
       })
     } catch (error) {
-      console.error('Error loading activity data:', error)
     } finally {
       setLoading(false)
     }

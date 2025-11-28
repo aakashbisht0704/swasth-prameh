@@ -29,10 +29,8 @@ export async function trackActivity(
       })
 
     if (error) {
-      console.error('Error tracking activity:', error)
     }
   } catch (error) {
-    console.error('Error tracking activity:', error)
   }
 }
 
@@ -49,13 +47,11 @@ export async function getActivityStats(userId: string, days: number = 30) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching activity stats:', error)
       return null
     }
 
     return data
   } catch (error) {
-    console.error('Error fetching activity stats:', error)
     return null
   }
 }
@@ -73,7 +69,6 @@ export async function getYogaMinutes(userId: string, days: number = 30) {
       .gte('created_at', startDate.toISOString())
 
     if (error) {
-      console.error('Error fetching yoga minutes:', error)
       return 0
     }
 
@@ -84,7 +79,6 @@ export async function getYogaMinutes(userId: string, days: number = 30) {
 
     return Math.round(totalMinutes)
   } catch (error) {
-    console.error('Error fetching yoga minutes:', error)
     return 0
   }
 }

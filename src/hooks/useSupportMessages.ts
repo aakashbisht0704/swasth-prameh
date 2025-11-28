@@ -178,7 +178,6 @@ export function useSupportMessages(chatId: string | null) {
         },
       })
     } catch (err) {
-      console.error('Error marking as read:', err)
     }
   }, [chatId])
 

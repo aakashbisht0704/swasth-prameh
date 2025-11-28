@@ -130,11 +130,8 @@ export function YogaVideos({ userId }: YogaVideosProps) {
         category: 'therapeutic',
         created_at: new Date().toISOString(),
       }))
-
-      console.log('Loaded videos:', videoData.length)
       setVideos(videoData)
     } catch (error: any) {
-      console.error('Error loading videos:', error)
       toast.error(`Failed to load yoga videos: ${error?.message || 'Unknown error'}`)
     } finally {
       setLoading(false)
